@@ -41,6 +41,7 @@ uint64_t Queue::timestamp() {
 
 void Queue::set_general(vector<Module> arg) {
 	int i;
+    nopSS = 0; //number_of_pairs_for_SS = 0
 	for(i = 0; i < arg.size(); i++) {
 		arg[i].set_index_for_file(i);
 	}
@@ -83,6 +84,7 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 				}
 			}
 		}
+		//Create pairs for general modules
 		for(int j = 0; j < gen_size; j++) {
 			for(int k = 0; k < general[j].get_nti(); k++) {
 				if(vals[i].get_dto(0) == general[j].get_dti(k)) {
@@ -98,6 +100,20 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 			}
 		}
 	}
+	//Create pairs for SS module
+	for(int i = 0; i < size; i++ ) {
+	    for(int k = 0; k < vals[i].get_nti(); k++) {
+	        if(vals[i].get_dti(k) == "СС") {
+	        pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+	        vals[i].set_nsopi_el(pairs.size() - 1, vals[i].get_npi());
+	        vals[i].inc_npi();
+	        SS_nop[nopSS] = pairs.size() - 1;
+	        nopSS++;
+	        //SS number of this pair
+	        }
+	    }
+	}
+	
 	//dump(vals, s, num_object);
 	if(m_t == AUTO) {
 		auto_accomp.push_back(vals);
@@ -124,6 +140,14 @@ void Queue::modules_queue(vector<Module> vals) {
 int Queue::run(int flows_auto, int flows_search) {
 	//dump(general, "general", 0);
 	cout << "Queue run\n";
+	
+	//print numbers of pairs:
+	for(auto& tag : SS_nop) {
+	    cout << tag << endl;
+	}
+	/*/Preparation
+	//create pairs for SS
+	
 	for(int i = 0; i < 203; i++) {
 		for(int k = 0; k < 200000; k++)
 			array_for_file[i][k] = 0;
@@ -147,6 +171,28 @@ int Queue::run(int flows_auto, int flows_search) {
 	}
 	//sleep(2);
 	//cout << "join_general\n";
+	
+	//Add here SyncSignal (SS) module:
+	while((long long int)(timestamp() - starttime) < 10000000000) {
+
+			int numeric_of_pair_for_output = vals->get_npo();
+			for(int i = 0; i < numeric_of_pair_for_output; i++) {
+				int number_of_current_pair = vals->get_nsopo_el(i);
+				send_message(number_of_current_pair);
+				array_for_file[vals->get_index_for_file()][index++] = 1;
+				//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+			}
+
+			t_i = t_i + vals->get_time_for_sleep() * 1000;
+			while( (t_i - (long long int)timestamp()) < 0 ) {
+			    t_i = t_i + vals->get_time_for_sleep() * 1000;
+			    propusk++;
+			    }
+			//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
+			usleep( (t_i - (long long int)timestamp()) / 1000 );
+			ifsend1 = false;
+		}	
+	
 	for (auto& thr : generals_threads) {
 		thr.join();
 	}
@@ -170,12 +216,12 @@ int Queue::run(int flows_auto, int flows_search) {
 		k++;
 	}
 	//cout << "after_delete\n";
+	
+	*/
 	return 0;
 }
 
 void Queue::module_queue(Module *vals) {
-
-
 	int count = 0;
 	bool ifsend1 = false;
 	double counter = 0.5;
@@ -186,111 +232,70 @@ void Queue::module_queue(Module *vals) {
 	int index = 0;
 	long long int t_i = (long long int) starttime;	
 	int propusk = 0;
-	//cout << vals->get_name() << endl;
-	//while( (long long int)(timestamp() - st_time) < 10000000000) {
-		//cout << (long long int)(timestamp() - starttime) << endl;
-        
-		if((vals->get_name() == "ФВД_АС" ) || (vals->get_name() == "ФВД_П" )) {
-			while((long long int)(timestamp() - starttime) < 10000000000) {
+	
+    while( (long long int)(timestamp() - starttime) < 10000000000) {
+        //Need to know if it his term to work:
+	    while(!ifsend1) {
+	        if(current < counter) {
+		        ifsend1 = false;
+	        }
+	        else {
+		        ifsend1 = true;
+		        counter += 1.0;
+	        }
+	        current += vals->get_data_amount();
+	        if(!ifsend1) {
 
-				while(!ifsend1) {
-					if(current < counter) {
-						ifsend1 = false;
-					}
-					else {
-						ifsend1 = true;
-						counter += 1.0;
-					}
-					current += vals->get_data_amount();
-					if(!ifsend1) {
+		        usleep(vals->get_time_for_sleep());
+	        }
+        }
+	//cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
+	int numeric_of_pair_for_input = vals->get_npi();
+	for(int i = 0; i < numeric_of_pair_for_input; i++) {
+		int number_of_current_pair = vals->get_nsopi_el(i);
+		
+		if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
 
-						usleep(vals->get_time_for_sleep());
-					}
-				}
-				
-				for(int l = 0; l < vals->get_tf(0); l++) {
-					long long int result = 1;
-					for (int k = 1; k <= 250; k++) {
-						result = result * k;
-					}
-				}
-				int numeric_of_pair_for_output = vals->get_npo();
-				for(int i = 0; i < numeric_of_pair_for_output; i++) {
-					int number_of_current_pair = vals->get_nsopo_el(i);
-					send_message(number_of_current_pair);
-					array_for_file[vals->get_index_for_file()][index++] = 1;
-					//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-				}
-				//cout << vals->get_time_for_sleep() << endl;
-				//cout << (int) (timestamp() - delay) / 1000 << endl;
-				//cout << vals->get_time_for_sleep() - (int) ((timestamp() - delay) / 1000) << endl;
-				//int time_delay = (int) ((timestamp() - delay) / 1000);
-				//cout << time_delay << endl;
-				t_i = t_i + vals->get_time_for_sleep() * 1000;
-				while( (t_i - (long long int)timestamp()) < 0 ) {
-				    t_i = t_i + vals->get_time_for_sleep() * 1000;
-				    propusk++;
-				    }
-				//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
-				usleep( (t_i - (long long int)timestamp()) / 1000 );
-				ifsend1 = false;
-			}
+			usleep(vals->get_time_for_sleep());
 		}
-		else {
-		    while( (long long int)(timestamp() - starttime) < 10000000000) {
-			//cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
-			int numeric_of_pair_for_input = vals->get_npi();
-			for(int i = 0; i < numeric_of_pair_for_input; i++) {
-				int number_of_current_pair = vals->get_nsopi_el(i);
+		while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
+			receive_message(number_of_current_pair);
+			kitten.insert(i);
+			array_for_file[vals->get_index_for_file()][index++] = 2;
 
-				//cout << i << " " << pairs[number_of_current_pair].first << " " << pairs[number_of_current_pair].second << endl;
-				//cout << vals->get_name() << endl;
-				if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
-					//cout << vals->get_name() << " before sleep" << endl;
-					//cout << vals->get_time_for_sleep() << endl;
-					usleep(vals->get_time_for_sleep());
+			for(int l = 0; l < vals->get_th(i); l++) {
+				long long int result = 1;
+				for (int k = 1; k <= 250; k++) {
+					result = result * k;
 				}
-				//cout << vals->get_name() << endl;
-				while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
-					receive_message(number_of_current_pair);
-					kitten.insert(i);
-					//cout << vals->get_name() << pairs[number_of_current_pair].second << endl;
-					array_for_file[vals->get_index_for_file()][index++] = 2;
-					//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-
-					for(int l = 0; l < vals->get_th(i); l++) {
-						long long int result = 1;
-						for (int k = 1; k <= 250; k++) {
-							result = result * k;
-						}
-					}
-				}
-			}
-			if (vals->get_npo() != 0) {
-				if(kitten.size() == numeric_of_pair_for_input)
-					flag_mes_received = true;
-			}
-			if(flag_mes_received) {
-			    kitten.clear();
-				int numeric_of_pair_for_output = vals->get_npo();
-				for(int i = 0; i < numeric_of_pair_for_output; i++) {
-					int number_of_current_pair = vals->get_nsopo_el(i);
-					for(int l = 0; l < vals->get_tf(i); l++) {
-						long long int result = 1;
-						for (int k = 1; k <= 250; k++) {
-							result = result * k;
-						}
-					}
-					//cout << "!!!!!!!" << vals->get_name()
-					send_message(number_of_current_pair);
-					array_for_file[vals->get_index_for_file()][index++] = 1;
-					//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-				}
-				flag_mes_received = false;
-				count_mess = 0;
 			}
 		}
 	}
+	if (vals->get_npo() != 0) {
+		if(kitten.size() == numeric_of_pair_for_input)
+			flag_mes_received = true;
+	}
+	if(flag_mes_received) {
+	    kitten.clear();
+		int numeric_of_pair_for_output = vals->get_npo();
+		for(int i = 0; i < numeric_of_pair_for_output; i++) {
+			int number_of_current_pair = vals->get_nsopo_el(i);
+			for(int l = 0; l < vals->get_tf(i); l++) {
+				long long int result = 1;
+				for (int k = 1; k <= 250; k++) {
+					result = result * k;
+				}
+			}
+			//cout << "!!!!!!!" << vals->get_name()
+			send_message(number_of_current_pair);
+			array_for_file[vals->get_index_for_file()][index++] = 1;
+			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+		}
+		flag_mes_received = false;
+		count_mess = 0;
+	    }
+    }
+
 	//if(vals->get_name() == "ФВД_АС")
         //cout << propusk << endl;
 }

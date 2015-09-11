@@ -48,6 +48,8 @@ private:
 	vector< vector<Module> > auto_accomp;
 	vector< vector<Module> > search;
 	int index_for_file;
+	int SS_nop[20];
+	int nopSS;
 
 };
 #endif /* QUEUE_H_ */
