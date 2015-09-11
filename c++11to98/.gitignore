@@ -1,0 +1,8 @@
+# Compiled Object files
+*.o
+
+# We don't need temporary files
+*~
+
+# We don't need 100500 txt files, so
+*.txt
