@@ -50,6 +50,7 @@ private:
 	int index_for_file;
 	int SS_nop[20];
 	int nopSS;
+	int sleep_time;
 
 };
 #endif /* QUEUE_H_ */

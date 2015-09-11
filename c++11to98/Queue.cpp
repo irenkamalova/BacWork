@@ -141,12 +141,11 @@ int Queue::run(int flows_auto, int flows_search) {
 	//dump(general, "general", 0);
 	cout << "Queue run\n";
 	
-	//print numbers of pairs:
+	/*/print numbers of pairs:
 	for(auto& tag : SS_nop) {
 	    cout << tag << endl;
-	}
-	/*/Preparation
-	//create pairs for SS
+	}*/
+	//Preparation
 	
 	for(int i = 0; i < 203; i++) {
 		for(int k = 0; k < 200000; k++)
@@ -172,39 +171,55 @@ int Queue::run(int flows_auto, int flows_search) {
 	//sleep(2);
 	//cout << "join_general\n";
 	
-	//Add here SyncSignal (SS) module:
+	//Start here SyncSignal (SS) module:
+	index_for_file++;
+	int sleep_time = 1000000;
+	int index = 0;
+	int propusk = 0;
+	//starttime = timestamp();
+	long long int t_i = (long long int) starttime;
+	if((long long int)(timestamp() - starttime) < 0) {
+	    cout << "Error 182 " << endl;
+	    return 0;
+	}
 	while((long long int)(timestamp() - starttime) < 10000000000) {
-
-			int numeric_of_pair_for_output = vals->get_npo();
-			for(int i = 0; i < numeric_of_pair_for_output; i++) {
-				int number_of_current_pair = vals->get_nsopo_el(i);
-				send_message(number_of_current_pair);
-				array_for_file[vals->get_index_for_file()][index++] = 1;
-				//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-			}
-
-			t_i = t_i + vals->get_time_for_sleep() * 1000;
-			while( (t_i - (long long int)timestamp()) < 0 ) {
-			    t_i = t_i + vals->get_time_for_sleep() * 1000;
-			    propusk++;
-			    }
-			//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
-			usleep( (t_i - (long long int)timestamp()) / 1000 );
-			ifsend1 = false;
-		}	
-	
+		if((long long int)(timestamp() - starttime) < 0) {
+	        cout << "Error 187 " << endl;
+	        return 0;
+	    }
+		int numeric_of_pair_for_output = nopSS;
+		for(int i = 0; i < numeric_of_pair_for_output; i++) {
+			int number_of_current_pair = SS_nop[i];
+			send_message(number_of_current_pair);
+			array_for_file[index_for_file][index++] = 1;
+			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+		}      
+		t_i = t_i + sleep_time * 1000;
+		while( (t_i - (long long int)timestamp()) < 0 ) {
+		    t_i = t_i + sleep_time * 1000;
+		    propusk++;
+		    cout << "proverka" << endl;
+		    }
+		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
+		if(t_i - (long long int)timestamp() < 0) {
+		    cout << "Error 205" << endl;
+		    return 0;
+		}
+		usleep( (t_i - (long long int)timestamp()) / 1000 );
+	}	
+	cout << "AFTER SS END WORK" << endl;
 	for (auto& thr : generals_threads) {
 		thr.join();
 	}
-	//cout << "after_join_general\n";
-	//cout << "join_thids\n";
+	cout << "after_join_general\n";
+	cout << "join_thids\n";
 	for (auto& thr : thids) {
 		thr.join();
 	}
-	//cout << "after_join_all\n";
+	cout << "after_join_all\n";
 	k = 0;
 	write_to_file(general, k);
-	//cout << "general_write\n";
+	cout << "general_write\n";
 	k++;
 	for(int i = 0; i < flows_auto; i++ ) {
 		vector<Module> like = auto_accomp[i];
@@ -215,9 +230,7 @@ int Queue::run(int flows_auto, int flows_search) {
 		write_to_file(search[i], k);
 		k++;
 	}
-	//cout << "after_delete\n";
-	
-	*/
+
 	return 0;
 }
 
@@ -232,23 +245,15 @@ void Queue::module_queue(Module *vals) {
 	int index = 0;
 	long long int t_i = (long long int) starttime;	
 	int propusk = 0;
-	
+    //cout << vals->get_name() << vals->get_data_amount() << endl;	
     while( (long long int)(timestamp() - starttime) < 10000000000) {
+	    if((long long int)(timestamp() - starttime) < 0) {
+	        cout << "Error 250 " << endl;
+            cout << vals->get_name() << endl;
+	    }    
         //Need to know if it his term to work:
-	    while(!ifsend1) {
-	        if(current < counter) {
-		        ifsend1 = false;
-	        }
-	        else {
-		        ifsend1 = true;
-		        counter += 1.0;
-	        }
-	        current += vals->get_data_amount();
-	        if(!ifsend1) {
+        ifsend1 = false;
 
-		        usleep(vals->get_time_for_sleep());
-	        }
-        }
 	//cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
 	int numeric_of_pair_for_input = vals->get_npi();
 	for(int i = 0; i < numeric_of_pair_for_input; i++) {
@@ -277,27 +282,43 @@ void Queue::module_queue(Module *vals) {
 	}
 	if(flag_mes_received) {
 	    kitten.clear();
-		int numeric_of_pair_for_output = vals->get_npo();
-		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			int number_of_current_pair = vals->get_nsopo_el(i);
-			for(int l = 0; l < vals->get_tf(i); l++) {
-				long long int result = 1;
-				for (int k = 1; k <= 250; k++) {
-					result = result * k;
-				}
-			}
-			//cout << "!!!!!!!" << vals->get_name()
-			send_message(number_of_current_pair);
-			array_for_file[vals->get_index_for_file()][index++] = 1;
-			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-		}
-		flag_mes_received = false;
-		count_mess = 0;
+	    if(vals->get_data_amount() != 1)
+	        cout << current << endl;
+        if(current < counter) {
+            ifsend1 = false;
+        }
+        else {
+            ifsend1 = true;
+            counter += 1.0;
+        }
+        current += vals->get_data_amount();
+        if(!ifsend1) {
+            flag_mes_received = false;
+            cout << vals->get_name() << endl;
+            usleep(vals->get_time_for_sleep());
+        }
+	    if(ifsend1) {
+	        int numeric_of_pair_for_output = vals->get_npo();
+	        for(int i = 0; i < numeric_of_pair_for_output; i++) {
+		        int number_of_current_pair = vals->get_nsopo_el(i);
+		        for(int l = 0; l < vals->get_tf(i); l++) {
+			        long long int result = 1;
+			        for (int k = 1; k <= 250; k++) {
+				        result = result * k;
+			        }
+		        }
+		        //cout << "!!!!!!!" << vals->get_name()
+		        send_message(number_of_current_pair);
+		        array_for_file[vals->get_index_for_file()][index++] = 1;
+		        //array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+	        }
+	        flag_mes_received = false;
+	        ifsend1 = false;
 	    }
     }
-
-	//if(vals->get_name() == "ФВД_АС")
-        //cout << propusk << endl;
+	    
+    }
+    cout << vals->get_name() << "endhiswork" << endl;
 }
 
 
