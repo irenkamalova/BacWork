@@ -13,6 +13,7 @@
 #include <unistd.h> //sleep
 //#include <errno.h>
 #include <chrono>
+#include <set>
 
 using namespace std;
 
@@ -180,7 +181,7 @@ void Queue::module_queue(Module *vals) {
 	double counter = 0.5;
 	double current = vals->get_data_amount();
 	int count_mess = 0;
-
+    set<int> kitten;
 	bool flag_mes_received = false;
 	int index = 0;
 	long long int t_i = (long long int) starttime;	
@@ -252,15 +253,11 @@ void Queue::module_queue(Module *vals) {
 				//cout << vals->get_name() << endl;
 				while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
 					receive_message(number_of_current_pair);
-					count_mess++;
+					kitten.insert(i);
 					//cout << vals->get_name() << pairs[number_of_current_pair].second << endl;
 					array_for_file[vals->get_index_for_file()][index++] = 2;
 					//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
 
-					if (vals->get_npo() != 0) {
-						if(count_mess == numeric_of_pair_for_input)
-							flag_mes_received = true;
-					}
 					for(int l = 0; l < vals->get_th(i); l++) {
 						long long int result = 1;
 						for (int k = 1; k <= 250; k++) {
@@ -269,7 +266,12 @@ void Queue::module_queue(Module *vals) {
 					}
 				}
 			}
+			if (vals->get_npo() != 0) {
+				if(kitten.size() == numeric_of_pair_for_input)
+					flag_mes_received = true;
+			}
 			if(flag_mes_received) {
+			    kitten.clear();
 				int numeric_of_pair_for_output = vals->get_npo();
 				for(int i = 0; i < numeric_of_pair_for_output; i++) {
 					int number_of_current_pair = vals->get_nsopo_el(i);
@@ -325,9 +327,9 @@ void Queue::write_to_file(vector<Module> vals, int num_object) {
         sprintf(buffer, "%d", num_object);
         string num_obj(buffer);
 
-	string s = "./queue/result_queue" + num_obj + ".txt";
+	//string s = "./queue/result_queue" + num_obj + ".txt";
 	string s2 = "./queue/messages_queue" + num_obj + ".txt";
-	ofstream fout(s);
+	//ofstream fout(s);
 	ofstream fout2(s2);
 	long long int time = 0;
 	int nano_seconds = 0;
@@ -340,15 +342,16 @@ void Queue::write_to_file(vector<Module> vals, int num_object) {
 		int k = 0;
 		count_send = 0;
 		count_rec = 0;
+
 		while(array_for_file[vals[i].get_index_for_file()][k] != 0) {
-			fout << vals[i].get_name();
+			//fout << vals[i].get_name();
 			if(array_for_file[vals[i].get_index_for_file()][k] == 1) {
-				fout << " отправил в ";
+				//fout << " отправил в ";
 				k++;
 				count_send++;
 			}
 			else if(array_for_file[vals[i].get_index_for_file()][k] == 2) {
-				fout << " получил в ";
+				//fout << " получил в ";
 				k++;
 				count_rec++;
 			}
@@ -362,16 +365,18 @@ void Queue::write_to_file(vector<Module> vals, int num_object) {
 				mini_seconds = time / 1000000;
 				micro_seconds = time / 1000 - mini_seconds * 1000;
 				nano_seconds = time - micro_seconds * 1000 - mini_seconds * 1000000;
-			}/*
+			}
+			/*
 			fout << seconds << " секунд " <<
 					mini_seconds << " милисекунд " <<
 					micro_seconds << " микросекунд " <<
 					nano_seconds << " наносекунд "
 					<< endl;
-			k++;*/
-
+			k++;
+            */
 		}
-		fout << endl;
+		//fout << endl;
+		
 		if(num_object != 0) {
 
 			if(count_rec != 0)

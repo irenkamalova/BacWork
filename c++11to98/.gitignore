@@ -6,3 +6,5 @@
 
 # We don't need 100500 txt files, so
 *.txt
+
+simulator
