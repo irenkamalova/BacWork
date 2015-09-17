@@ -4,7 +4,7 @@
 # We don't need temporary files
 *~
 
-# We don't need 100500 txt files, so
-
+# We don't need some txt files:
+check_modules/
 
 simulator

@@ -173,7 +173,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 1000000;
+	int sleep_time = 1000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -198,7 +198,6 @@ int Queue::run(int flows_auto, int flows_search) {
 		while( (t_i - (long long int)timestamp()) < 0 ) {
 		    t_i = t_i + sleep_time * 1000;
 		    propusk++;
-		    cout << "proverka" << endl;
 		    }
 		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
 		if(t_i - (long long int)timestamp() < 0) {
@@ -236,7 +235,7 @@ int Queue::run(int flows_auto, int flows_search) {
 
 void Queue::module_queue(Module *vals) {
     int i = 0;
-    //Check
+    /*Check
     string file_name = "./check_modules/" + vals->get_name() + ".txt";
     ofstream fout(file_name);
     fout << "Name:\n" << vals->get_name() << "\nInput data:\n" << "Number: " << vals->get_npi() << endl;
@@ -252,37 +251,31 @@ void Queue::module_queue(Module *vals) {
             fout << vals->get_dto(i) << " " << vals->get_tf(i) << endl;
     }
     fout.close();
-    
+    */
 	int count = 0;
 	bool ifsend1 = false;
 	double counter = 0.5;
 	double current = vals->get_data_amount();
-	int count_mess = 0;
 
 	bool flag_mes_received = false;
 	int index = 0;
 	long long int t_i = (long long int) starttime;	
-	int propusk = 0;
+	int numeric_of_pair_for_input = vals->get_npi();
     //cout << vals->get_name() << vals->get_par(0) << endl;	
     while( (long long int)(timestamp() - starttime) < 10000000000) {
 	    if((long long int)(timestamp() - starttime) < 0) {
-	        cout << "Error 250 " << endl;
+	        cout << "Error 270 " << endl;
             cout << vals->get_name() << endl;
 	    }    
-        //Need to know if it his term to work:
-        ifsend1 = false;
-
 	//cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
-	int numeric_of_pair_for_input = vals->get_npi();
+	
 	for(int i = 0; i < numeric_of_pair_for_input; i++) {
 		int number_of_current_pair = vals->get_nsopi_el(i);
 		
 		if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
 			usleep(vals->get_time_for_sleep());
 		}		
-	    while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
-	        if(vals->get_name() == "ИмАС") 
-	            cout <<  i << " " << vals->get_par(i) << endl;
+	    else while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
 	        if(vals->get_par(i) == 1)
 	            flag_mes_received = true;
 			receive_message(number_of_current_pair);

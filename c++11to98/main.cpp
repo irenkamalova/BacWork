@@ -100,7 +100,6 @@ vector<Module> parser(string s) {
 			fin >> time_hand;
 			int number_of_data_type = vals[i].get_nti();
 			vals[i].set_th(time_hand, number_of_data_type);
-			cout << vals[i].get_name() <<  parametr << " " << number_of_data_type << endl;
 			vals[i].set_par(parametr, number_of_data_type);
 			
 			vals[i].inc_nti();
