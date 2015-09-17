@@ -1,14 +1,7 @@
-/*
- * Queue.cpp
- *
- *  Created on: Apr 22, 2015
- *      Author: irisha
- */
-
 #include "Queue.h"
 #include <iostream>
 #include <fstream>
-#include <thread>
+#include <pthread.h>
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h> //sleep
 #include <chrono>
@@ -50,10 +43,31 @@ void Queue::set_general(vector<Module> arg) {
 
 void write_to_file(vector<Module> vals);
 
-void module(Queue *runner, Module *arg) {
+struct thread_data {
+    Queue *runner;
+    Module *arg;
+}
+
+struct thread_data_s {
+    Queue *runner;
+    vector<Modules> vals;
+}
+
+struct thread_data thrdarray[200];
+struct thread_data_s thrdarrays[200];
+
+void module(void *threadarg) {
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    Queue *runner = my_data->runner;
+    Module *arg = my_data->arg;
 	runner->module_queue(arg);
 }
-void modules(Queue *runner, vector<Module> vals) {
+void modules(void *threadarg) {
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    Queue *runner = my_data->runner;
+    vector<Modules> vals = my_data->vals;
 	runner->modules_queue(vals);
 }
 
@@ -76,7 +90,6 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 				if(vals[i].get_dto(0) == vals[j].get_dti(k)) {
 					pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
 					vals[i].set_nsopo_el(pairs.size() - 1, vals[i].get_npo());
-					//vals[i].set_index_cond_vars(vals[j].get_index_cond_var(), vals[i].get_npo());
 					vals[i].inc_npo();
 					vals[j].set_nsopi_el(pairs.size() - 1, vals[j].get_npi());
 					vals[j].inc_npi();
@@ -88,12 +101,9 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 			for(int k = 0; k < general[j].get_nti(); k++) {
 				if(vals[i].get_dto(0) == general[j].get_dti(k)) {
 					pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-					//cout << pairs.size() << " " << pairs[pairs.size() - 1].first << " " << pairs[pairs.size() - 1].second << endl;
 					vals[i].set_nsopo_el(pairs.size() - 1, vals[i].get_npo());
-					//vals[i].set_index_cond_vars(general[j].get_index_cond_var(), vals[i].get_npo());
 					vals[i].inc_npo();
 					general[j].set_nsopi_el(pairs.size() - 1, general[j].get_npi());
-					//cout << general[j].get_nsopi_el(general[j].get_npi())<< " " << general[j].get_npi() << endl;
 					general[j].inc_npi();
 				}
 			}
@@ -124,14 +134,22 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 
 void Queue::modules_queue(vector<Module> vals) {
 	int size = vals.size();
-	vector<thread> thids;
+	vector<pthread_t> thids;
 	for(int i = 0; i < size; i++) {
-		thids.push_back(thread(module, this, &vals[i]));
+	        thrdarray[i].runner = this;
+	        thrdarray[i].arg = vals[i];
+			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module,
+					(void *)&thrdarray[i])) {
+				cerr << "Error on thread create!\n";
+				exit(EXIT_FAILURE);
+			}
 	}
 	//sleep(2);
 	//cout << num_obj << " join\n";
-	for (auto& thr : thids) {
-		thr.join();
+
+	for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
+			++it) {
+		pthread_join(*it, (void **) NULL);
 	}
 	//cout << num_obj << " afterjoin\n";
 }
@@ -145,26 +163,52 @@ int Queue::run(int flows_auto, int flows_search) {
 	    cout << tag << endl;
 	}*/
 	//Preparation
+	struct thread_data_for_module {
+	    Queue *runner;
+	    vector<Module> vals;
+	}
 	
+	struct thread_data_for_modules {
+	    Queue *runner;
+	    
+	}
 	for(int i = 0; i < 203; i++) {
 		for(int k = 0; k < 200000; k++)
 			array_for_file[i][k] = 0;
 	}
-	vector<thread> generals_threads;
-	vector<thread> thids;
+	vector<pthread_t> generals_threads;
+	vector<pthread_t> thids;
 
 	starttime = timestamp();	
 	for(int i = 0; i < general.size(); i++ ) {
-			generals_threads.push_back(thread(module, this, &general[i]));
+	        thrdarray[i].runner = this;
+	        thrdarray[i].arg = vals[i];
+			if (pthread_create(&generals_threads[i], (pthread_attr_t *) NULL, module,
+					(void *)&thrdarray[i])) {
+				cerr << "Error on thread create!\n";
+				exit(EXIT_FAILURE);
+			}
 	}
 	int k = 1;
 	for(int i = 0; i < flows_auto; i++) {
-		thids.push_back(thread(modules, this, auto_accomp[i]));
-		k++;
+	        thrdarrays[i].runner = this;
+	        thrdarrays[i].vals = auto_accomp[i];
+			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
+					(void *)&thrdarrays[i])) {
+				cerr << "Error on thread create!\n";
+				exit(EXIT_FAILURE);
+			}
+			k++;
 	}
 
 	for(int i = 0; i < flows_search; i++) {
-		thids.push_back(thread(modules, this, search[i]));
+	        thrdarrays[i].runner = this;
+	        thrdarrays[i].vals = search[i];
+			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
+					(void *)&thrdarrays[i])) {
+				cerr << "Error on thread create!\n";
+				exit(EXIT_FAILURE);
+			}
 		k++;
 	}
 	//sleep(2);
@@ -172,7 +216,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 100000;
+	int sleep_time = 1000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -206,13 +250,16 @@ int Queue::run(int flows_auto, int flows_search) {
 		usleep( (t_i - (long long int)timestamp()) / 1000 );
 	}	
 	cout << "AFTER SS END WORK" << endl;
-	for (auto& thr : generals_threads) {
-		thr.join();
-	}
+
+	for (vector<pthread_t>::iterator it =  generals_threads.begin(); it !=  generals_threads.end();
+			++it) {
+		pthread_join(*it, (void **) NULL);
+	}	
 	cout << "after_join_general\n";
 	cout << "join_thids\n";
-	for (auto& thr : thids) {
-		thr.join();
+	for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
+			++it) {
+		pthread_join(*it, (void **) NULL);
 	}
 	cout << "after_join_all\n";
 	k = 0;
@@ -291,7 +338,6 @@ void Queue::module_queue(Module *vals) {
 	}
 	if(flag_mes_received) {
 	    if(vals->get_data_amount() != 1) {
-	        //cout << current << endl;
             if(current < counter) {
                 ifsend1 = false;
             }
@@ -302,7 +348,6 @@ void Queue::module_queue(Module *vals) {
             current += vals->get_data_amount();
             if(!ifsend1) {
                 flag_mes_received = false;
-                //cout << vals->get_name() << endl;
                 usleep(vals->get_time_for_sleep());
             }
         }
@@ -317,7 +362,6 @@ void Queue::module_queue(Module *vals) {
 				        result = result * k;
 			        }
 		        }
-		        //cout << "!!!!!!!" << vals->get_name()
 		        send_message(number_of_current_pair);
 		        array_for_file[vals->get_index_for_file()][index++] = 1;
 		        //array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
