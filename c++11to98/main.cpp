@@ -21,6 +21,8 @@ int main(int argc, char *argv[]) {
         check_parser(general, "check_general.txt");
         vector<Module> a = parser("modules_auto.txt");
         vector<Module> b = parser("modules_search.txt");
+        //check_parser(a, "a.txt");
+        //return 0;
         int flow1 = atoi(argv[2]);
         int flow2 = atoi(argv[3]);
 		if (strcmp(argv[1], queue_way) == 0) {
@@ -78,6 +80,8 @@ vector<Module> parser(string s) {
 			vals.push_back(*module);
 			k = 0;
 			vals[i].set_number(i);
+			vals[i].set_nti(0);
+			vals[i].set_nto(0);
 			int time;
 			fin >> time;
 			vals[i].set_time_for_sleep(time);
@@ -89,11 +93,16 @@ vector<Module> parser(string s) {
 		fin >> buff;
 		if (strcmp(buff, "-") != 0) {
 			vals[i].set_dti(buff, k);
-
+			int parametr;
+			fin >> parametr;
+            
 			int time_hand;
 			fin >> time_hand;
 			int number_of_data_type = vals[i].get_nti();
 			vals[i].set_th(time_hand, number_of_data_type);
+			cout << vals[i].get_name() <<  parametr << " " << number_of_data_type << endl;
+			vals[i].set_par(parametr, number_of_data_type);
+			
 			vals[i].inc_nti();
 		} else
 			fin >> buff;
@@ -110,7 +119,7 @@ vector<Module> parser(string s) {
 		i++;
 	}
 	fin.close();
-	////check outputs
+	
 	return vals;
 }
 

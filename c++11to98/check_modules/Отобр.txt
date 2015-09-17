@@ -1,0 +1,5 @@
+Name:
+Отобр
+Input data:
+Number: 1
+ТрАС 5

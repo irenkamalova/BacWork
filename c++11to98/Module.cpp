@@ -79,8 +79,16 @@ void Module::inc_nto() {
 	number_of_type_output++;
 }
 
+void Module::set_nti(int i) {
+    number_of_type_input = i;
+}
+
 int Module::get_nti() {
 	return number_of_type_input;
+}
+
+void Module::set_nto(int i) {
+    number_of_type_output = i;
 }
 
 int Module::get_nto() {
@@ -187,4 +195,12 @@ int Module::get_n_of_s_i() {
 
 void Module::inc_n_of_s_i() {
 	number_of_sockets_input++;
+}
+
+void Module::set_par(int par, int i) {
+    parametrs[i] = par; 
+}
+
+int Module::get_par(int i) {
+    return parametrs[i];
 }

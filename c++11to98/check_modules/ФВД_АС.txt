@@ -1,0 +1,11 @@
+Name:
+ФВД_АС
+Input data:
+Number: 1
+СС 2
+Main input data:
+СС
+Output data:
+РаспАС 15
+ 0
+ 0

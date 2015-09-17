@@ -235,17 +235,35 @@ int Queue::run(int flows_auto, int flows_search) {
 }
 
 void Queue::module_queue(Module *vals) {
+    int i = 0;
+    //Check
+    string file_name = "./check_modules/" + vals->get_name() + ".txt";
+    ofstream fout(file_name);
+    fout << "Name:\n" << vals->get_name() << "\nInput data:\n" << "Number: " << vals->get_npi() << endl;
+    for(int i = 0; i < vals->get_npi(); i++)
+        fout << vals->get_dti(i) << " " << vals->get_th(i) << endl;
+    if(vals->get_npo() != 0) {
+        fout << "Main input data:\n";
+        for(int i = 0; i < vals->get_npi(); i++)
+            if(vals->get_par(i) == 1) 
+                fout << vals->get_dti(i) << endl;
+        fout << "Output data:\n";
+        for(int i = 0; i < vals->get_npo(); i++) 
+            fout << vals->get_dto(i) << " " << vals->get_tf(i) << endl;
+    }
+    fout.close();
+    
 	int count = 0;
 	bool ifsend1 = false;
 	double counter = 0.5;
 	double current = vals->get_data_amount();
 	int count_mess = 0;
-    set<int> kitten;
+
 	bool flag_mes_received = false;
 	int index = 0;
 	long long int t_i = (long long int) starttime;	
 	int propusk = 0;
-    //cout << vals->get_name() << vals->get_data_amount() << endl;	
+    //cout << vals->get_name() << vals->get_par(0) << endl;	
     while( (long long int)(timestamp() - starttime) < 10000000000) {
 	    if((long long int)(timestamp() - starttime) < 0) {
 	        cout << "Error 250 " << endl;
@@ -260,12 +278,15 @@ void Queue::module_queue(Module *vals) {
 		int number_of_current_pair = vals->get_nsopi_el(i);
 		
 		if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
-
 			usleep(vals->get_time_for_sleep());
-		}
-		while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
+		}		
+	    while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
+	        if(vals->get_name() == "ИмАС") 
+	            cout <<  i << " " << vals->get_par(i) << endl;
+	        if(vals->get_par(i) == 1)
+	            flag_mes_received = true;
 			receive_message(number_of_current_pair);
-			kitten.insert(i);
+
 			array_for_file[vals->get_index_for_file()][index++] = 2;
 
 			for(int l = 0; l < vals->get_th(i); l++) {
@@ -276,27 +297,24 @@ void Queue::module_queue(Module *vals) {
 			}
 		}
 	}
-	if (vals->get_npo() != 0) {
-		if(kitten.size() == numeric_of_pair_for_input)
-			flag_mes_received = true;
-	}
 	if(flag_mes_received) {
-	    kitten.clear();
-	    if(vals->get_data_amount() != 1)
-	        cout << current << endl;
-        if(current < counter) {
-            ifsend1 = false;
+	    if(vals->get_data_amount() != 1) {
+	        //cout << current << endl;
+            if(current < counter) {
+                ifsend1 = false;
+            }
+            else {
+                ifsend1 = true;
+                counter += 1.0;
+            }
+            current += vals->get_data_amount();
+            if(!ifsend1) {
+                flag_mes_received = false;
+                //cout << vals->get_name() << endl;
+                usleep(vals->get_time_for_sleep());
+            }
         }
-        else {
-            ifsend1 = true;
-            counter += 1.0;
-        }
-        current += vals->get_data_amount();
-        if(!ifsend1) {
-            flag_mes_received = false;
-            cout << vals->get_name() << endl;
-            usleep(vals->get_time_for_sleep());
-        }
+        else ifsend1 = true;
 	    if(ifsend1) {
 	        int numeric_of_pair_for_output = vals->get_npo();
 	        for(int i = 0; i < numeric_of_pair_for_output; i++) {
@@ -311,14 +329,14 @@ void Queue::module_queue(Module *vals) {
 		        send_message(number_of_current_pair);
 		        array_for_file[vals->get_index_for_file()][index++] = 1;
 		        //array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-	        }
-	        flag_mes_received = false;
+	        } 
 	        ifsend1 = false;
 	    }
+	    flag_mes_received = false;
     }
 	    
     }
-    cout << vals->get_name() << "endhiswork" << endl;
+    //cout << vals->get_name() << "endhiswork" << endl;
 }
 
 

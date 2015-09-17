@@ -37,7 +37,12 @@ public:
 
 	void set_tf(int tf, int i);
 	int get_tf(int i);
+	
+	void set_par(int par, int i);
+	int get_par(int i);
 
+	void set_nti(int i);
+	void set_nto(int i);
 	void inc_nti();
 	void inc_nto();
 	int get_nti();
@@ -88,6 +93,7 @@ private:
 	double data_amount;
 	int time_hand[SIZE];
 	int time_form[SIZE];
+	int parametrs[SIZE];
 	int number_of_type_input;
 	int number_of_type_output;
 	int receivers[SIZE];
