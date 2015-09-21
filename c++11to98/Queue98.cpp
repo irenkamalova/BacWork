@@ -46,28 +46,26 @@ void write_to_file(vector<Module> vals);
 struct thread_data {
     Queue *runner;
     Module *arg;
-}
+};
 
 struct thread_data_s {
     Queue *runner;
-    vector<Modules> vals;
-}
+    vector<Module> vals;
+};
 
-struct thread_data thrdarray[200];
-struct thread_data_s thrdarrays[200];
 
-void module(void *threadarg) {
+void *module(void *threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
     Queue *runner = my_data->runner;
     Module *arg = my_data->arg;
 	runner->module_queue(arg);
 }
-void modules(void *threadarg) {
-    struct thread_data *my_data;
-    my_data = (struct thread_data *) threadarg;
+void *modules(void *threadarg) {
+    struct thread_data_s *my_data;
+    my_data = (struct thread_data_s *) threadarg;
     Queue *runner = my_data->runner;
-    vector<Modules> vals = my_data->vals;
+    vector<Module> vals = my_data->vals;
 	runner->modules_queue(vals);
 }
 
@@ -135,11 +133,12 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 void Queue::modules_queue(vector<Module> vals) {
 	int size = vals.size();
 	vector<pthread_t> thids;
+    struct thread_data thrdarray[20];
 	for(int i = 0; i < size; i++) {
 	        thrdarray[i].runner = this;
-	        thrdarray[i].arg = vals[i];
+	        thrdarray[i].arg = &vals[i];
 			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module,
-					(void *)&thrdarray[i])) {
+					&thrdarray[i])) {
 				cerr << "Error on thread create!\n";
 				exit(EXIT_FAILURE);
 			}
@@ -157,32 +156,25 @@ void Queue::modules_queue(vector<Module> vals) {
 int Queue::run(int flows_auto, int flows_search) {
 	//dump(general, "general", 0);
 	cout << "Queue run\n";
-	
+    struct thread_data_s thrdarrays[200];
+	struct thread_data thrdarray[20];
 	/*/print numbers of pairs:
 	for(auto& tag : SS_nop) {
 	    cout << tag << endl;
 	}*/
 	//Preparation
-	struct thread_data_for_module {
-	    Queue *runner;
-	    vector<Module> vals;
-	}
-	
-	struct thread_data_for_modules {
-	    Queue *runner;
-	    
-	}
+
 	for(int i = 0; i < 203; i++) {
 		for(int k = 0; k < 200000; k++)
 			array_for_file[i][k] = 0;
 	}
-	vector<pthread_t> generals_threads;
-	vector<pthread_t> thids;
+	vector<pthread_t> generals_threads(3);
+	vector<pthread_t> thids(100);
 
 	starttime = timestamp();	
 	for(int i = 0; i < general.size(); i++ ) {
 	        thrdarray[i].runner = this;
-	        thrdarray[i].arg = vals[i];
+	        thrdarray[i].arg = &general[i];
 			if (pthread_create(&generals_threads[i], (pthread_attr_t *) NULL, module,
 					(void *)&thrdarray[i])) {
 				cerr << "Error on thread create!\n";
@@ -200,7 +192,7 @@ int Queue::run(int flows_auto, int flows_search) {
 			}
 			k++;
 	}
-
+	    cout << "No Error acc " << endl;
 	for(int i = 0; i < flows_search; i++) {
 	        thrdarrays[i].runner = this;
 	        thrdarrays[i].vals = search[i];
@@ -222,32 +214,43 @@ int Queue::run(int flows_auto, int flows_search) {
 	//starttime = timestamp();
 	long long int t_i = (long long int) starttime;
 	if((long long int)(timestamp() - starttime) < 0) {
-	    cout << "Error 182 " << endl;
+	    cout << "No Error " << endl;
 	    return 0;
 	}
+cout << "No Error 0 " << endl;
 	while((long long int)(timestamp() - starttime) < 10000000000) {
 		if((long long int)(timestamp() - starttime) < 0) {
 	        cout << "Error 187 " << endl;
 	        return 0;
 	    }
+cout << "No Error 1 " << endl;
 		int numeric_of_pair_for_output = nopSS;
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
 			int number_of_current_pair = SS_nop[i];
+cout << "No Error 1.3 " << endl;
 			send_message(number_of_current_pair);
+
+cout << "No Error 1.6 " << endl;
 			array_for_file[index_for_file][index++] = 1;
 			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
 		}      
+cout << "No Error 2 " << endl;
 		t_i = t_i + sleep_time * 1000;
 		while( (t_i - (long long int)timestamp()) < 0 ) {
 		    t_i = t_i + sleep_time * 1000;
 		    propusk++;
 		    }
+cout << "No Error 3 " << endl;
 		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
 		if(t_i - (long long int)timestamp() < 0) {
 		    cout << "Error 205" << endl;
 		    return 0;
 		}
-		usleep( (t_i - (long long int)timestamp()) / 1000 );
+        int for_usleep = (t_i - (long long int)timestamp()) / 1000;
+cout << "No Error 4 " << endl;
+cout << for_usleep << endl;
+		usleep( 2 );
+cout << "No Error 5 " << endl;
 	}	
 	cout << "AFTER SS END WORK" << endl;
 
