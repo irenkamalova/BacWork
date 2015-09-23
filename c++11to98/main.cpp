@@ -8,6 +8,7 @@
 #include <thread>
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h>  //for sleep
+#include <stdlib.h>  //atoi
 
 vector<Module> parser(string s);
 void check_parser(vector<Module> vals, string s);

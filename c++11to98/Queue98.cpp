@@ -5,7 +5,7 @@
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h> //sleep
 #include <chrono>
-#include <set>
+#include <stdlib.h> //exit
 
 using namespace std;
 
@@ -184,21 +184,21 @@ int Queue::run(int flows_auto, int flows_search) {
 	}
 	int k = 1;
 	for(int i = 0; i < flows_auto; i++) {
-	        thrdarrays[i].runner = this;
-	        thrdarrays[i].vals = auto_accomp[i];
+	        thrdarrays[k - 1].runner = this;
+	        thrdarrays[k - 1].vals = auto_accomp[i];
 			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
-					(void *)&thrdarrays[i])) {
+					(void *)&thrdarrays[k - 1])) {
 				cerr << "Error on thread create!\n";
 				exit(EXIT_FAILURE);
 			}
 			k++;
 	}
-	    cout << "No Error acc " << endl;
+	
 	for(int i = 0; i < flows_search; i++) {
-	        thrdarrays[i].runner = this;
-	        thrdarrays[i].vals = search[i];
+	        thrdarrays[k - 1].runner = this;
+	        thrdarrays[k - 1].vals = search[i];
 			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
-					(void *)&thrdarrays[i])) {
+					(void *)&thrdarrays[k - 1])) {
 				cerr << "Error on thread create!\n";
 				exit(EXIT_FAILURE);
 			}
@@ -209,7 +209,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 10000;
+	int sleep_time = 100000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -276,7 +276,7 @@ int Queue::run(int flows_auto, int flows_search) {
 
 void Queue::module_queue(Module *vals) {
     int i = 0;
-    cout << vals->get_name() << endl;
+    cout << vals->get_name() << "start" << endl;
     //Check
     string file_name = "./check_modules/" + vals->get_name() + ".txt";
     ofstream fout(file_name);
@@ -367,7 +367,7 @@ void Queue::module_queue(Module *vals) {
     }
 	    
     }
-    //cout << vals->get_name() << "endhiswork" << endl;
+    cout << vals->get_name() << "finished" << endl;
 }
 
 
