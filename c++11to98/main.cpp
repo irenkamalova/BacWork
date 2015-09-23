@@ -1,11 +1,10 @@
 #include <iostream>
 #include "Module.h"
 #include "Queue.h"
-#include "Socket.h"
+//#include "Socket.h"
 #include <vector>
 #include <cstring>
 #include <fstream>
-#include <thread>
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
@@ -40,6 +39,7 @@ int main(int argc, char *argv[]) {
 			queue->run(flow1, flow2);
             delete queue;
 		} else if (strcmp(argv[1], socket_way) == 0) {
+		/*
 			Socket *socket = new Socket();
 			socket->set_general(general);
             socket->m_t = Socket::AUTO;
@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
 			}
 			socket->run(flow1, flow2);
             delete socket;
+            */
 		} else {
 			cerr << "Wrong simulator name! Input queue or socket";
 			return 1;
@@ -64,8 +65,9 @@ int main(int argc, char *argv[]) {
 }
 
 vector<Module> parser(string s) {
-
-	ifstream fin(s);
+    char * cstr = new char [s.length()+1];
+    strcpy(cstr, s.c_str());
+	ifstream fin(cstr);
 	char buff[SIZE];
 	int i = 0, l = 0;
 	int k = 0, m = 0;
@@ -124,7 +126,9 @@ vector<Module> parser(string s) {
 }
 
 void check_parser(vector<Module> vals, string s) {
-	ofstream fout(s);
+    char * cstr = new char [s.length()+1];
+    strcpy(cstr, s.c_str());
+    ofstream fout(cstr);
 	for(int i = 0; i < vals.size(); i++) {
 		fout << vals[i].get_number() << " " << vals[i].get_name() << " " << vals[i].get_data_amount()
 				<< "  " << vals[i].get_time_for_sleep() << " ";

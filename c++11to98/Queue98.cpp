@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h> //sleep
-#include <chrono>
 #include <stdlib.h> //exit
+#include <cstring>
 
 using namespace std;
 
@@ -276,10 +276,12 @@ int Queue::run(int flows_auto, int flows_search) {
 
 void Queue::module_queue(Module *vals) {
     int i = 0;
-    cout << vals->get_name() << "start" << endl;
-    //Check
+    //cout << vals->get_name() << "start" << endl;
+    /*Check
     string file_name = "./check_modules/" + vals->get_name() + ".txt";
-    ofstream fout(file_name);
+    char * cstr = new char [file_name.length()+1];
+    strcpy(cstr, file_name.c_str());
+    ofstream fout(cstr);
     fout << "Name:" << vals->get_name() << "\nInput data:" << vals->get_npi() << endl;
     for(int i = 0; i < vals->get_npi(); i++)
         fout << vals->get_dti(i) << " " << vals->get_th(i) << endl;
@@ -293,6 +295,7 @@ void Queue::module_queue(Module *vals) {
             fout << vals->get_dto(i) << " " << vals->get_tf(i) << endl;
     }
     fout.close();
+    */
 	int count = 0;
 	bool ifsend1 = false;
 	double counter = 0.5;
@@ -367,7 +370,7 @@ void Queue::module_queue(Module *vals) {
     }
 	    
     }
-    cout << vals->get_name() << "finished" << endl;
+    //cout << vals->get_name() << "finished" << endl;
 }
 
 
@@ -379,7 +382,9 @@ void Queue::dump(vector<Module> vals, string s, int num_object) {
         string num_obj(buffer);
 
 	string file_name = "./queue/dump_" + s + num_obj + ".txt";
-	ofstream fout(file_name);
+	char * cstr = new char [file_name.length()+1];
+	strcpy(cstr, file_name.c_str());
+    ofstream fout(cstr);
 	int size = vals.size();
 	for(int i = 0; i < size; i++) {
 		fout << vals[i].get_name() << " " ;
@@ -405,7 +410,10 @@ void Queue::write_to_file(vector<Module> vals, int num_object) {
 	//string s = "./queue/result_queue" + num_obj + ".txt";
 	string s2 = "./queue/messages_queue" + num_obj + ".txt";
 	//ofstream fout(s);
-	ofstream fout2(s2);
+	char * cstr = new char [s2.length()+1];
+	strcpy (cstr, s2.c_str());
+	ofstream fout2(cstr);
+
 	long long int time = 0;
 	int nano_seconds = 0;
 	int micro_seconds = 0;
