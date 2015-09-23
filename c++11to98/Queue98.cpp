@@ -69,6 +69,29 @@ void *modules(void *threadarg) {
 	runner->modules_queue(vals);
 }
 
+void Queue::modules_queue(vector<Module> vals) {
+	int size = vals.size();
+	vector<pthread_t> thids(100);
+    struct thread_data thrdarray[20];
+	for(int i = 0; i < size; i++) {
+	        thrdarray[i].runner = this;
+	        thrdarray[i].arg = &vals[i];
+			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module,
+					&thrdarray[i])) {
+				cerr << "Error on thread create!\n";
+				exit(EXIT_FAILURE);
+			}
+	}
+	//sleep(2);
+	//cout << num_obj << " join\n";
+
+	for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
+			++it) {
+		pthread_join(*it, (void **) NULL);
+	}
+	//cout << num_obj << " afterjoin\n";
+}
+
 void Queue::set_index_for_file(int index) {
 	index_for_file = index;
 }
@@ -130,28 +153,6 @@ void Queue::create_pairs(vector<Module> vals, int num_object, modules_types m_t)
 	}
 }
 
-void Queue::modules_queue(vector<Module> vals) {
-	int size = vals.size();
-	vector<pthread_t> thids;
-    struct thread_data thrdarray[20];
-	for(int i = 0; i < size; i++) {
-	        thrdarray[i].runner = this;
-	        thrdarray[i].arg = &vals[i];
-			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module,
-					&thrdarray[i])) {
-				cerr << "Error on thread create!\n";
-				exit(EXIT_FAILURE);
-			}
-	}
-	//sleep(2);
-	//cout << num_obj << " join\n";
-
-	for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
-			++it) {
-		pthread_join(*it, (void **) NULL);
-	}
-	//cout << num_obj << " afterjoin\n";
-}
 
 int Queue::run(int flows_auto, int flows_search) {
 	//dump(general, "general", 0);
@@ -208,7 +209,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 1000;
+	int sleep_time = 10000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -217,40 +218,31 @@ int Queue::run(int flows_auto, int flows_search) {
 	    cout << "No Error " << endl;
 	    return 0;
 	}
-cout << "No Error 0 " << endl;
 	while((long long int)(timestamp() - starttime) < 10000000000) {
 		if((long long int)(timestamp() - starttime) < 0) {
 	        cout << "Error 187 " << endl;
 	        return 0;
 	    }
-cout << "No Error 1 " << endl;
+	    
 		int numeric_of_pair_for_output = nopSS;
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
 			int number_of_current_pair = SS_nop[i];
-cout << "No Error 1.3 " << endl;
 			send_message(number_of_current_pair);
-
-cout << "No Error 1.6 " << endl;
 			array_for_file[index_for_file][index++] = 1;
 			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
 		}      
-cout << "No Error 2 " << endl;
 		t_i = t_i + sleep_time * 1000;
 		while( (t_i - (long long int)timestamp()) < 0 ) {
 		    t_i = t_i + sleep_time * 1000;
 		    propusk++;
 		    }
-cout << "No Error 3 " << endl;
 		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
 		if(t_i - (long long int)timestamp() < 0) {
 		    cout << "Error 205" << endl;
 		    return 0;
 		}
         int for_usleep = (t_i - (long long int)timestamp()) / 1000;
-cout << "No Error 4 " << endl;
-cout << for_usleep << endl;
-		usleep( 2 );
-cout << "No Error 5 " << endl;
+		usleep( for_usleep );
 	}	
 	cout << "AFTER SS END WORK" << endl;
 
@@ -284,10 +276,11 @@ cout << "No Error 5 " << endl;
 
 void Queue::module_queue(Module *vals) {
     int i = 0;
-    /*Check
+    cout << vals->get_name() << endl;
+    //Check
     string file_name = "./check_modules/" + vals->get_name() + ".txt";
     ofstream fout(file_name);
-    fout << "Name:\n" << vals->get_name() << "\nInput data:\n" << "Number: " << vals->get_npi() << endl;
+    fout << "Name:" << vals->get_name() << "\nInput data:" << vals->get_npi() << endl;
     for(int i = 0; i < vals->get_npi(); i++)
         fout << vals->get_dti(i) << " " << vals->get_th(i) << endl;
     if(vals->get_npo() != 0) {
@@ -300,7 +293,6 @@ void Queue::module_queue(Module *vals) {
             fout << vals->get_dto(i) << " " << vals->get_tf(i) << endl;
     }
     fout.close();
-    */
 	int count = 0;
 	bool ifsend1 = false;
 	double counter = 0.5;
