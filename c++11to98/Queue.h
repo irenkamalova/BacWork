@@ -12,8 +12,6 @@
 #include "Module.h"
 #include <utility> //pairs
 #include <stdint.h> // use uint64_t type
-#include <mutex>
-#include <condition_variable>
 #include <map>
 
 class Queue {

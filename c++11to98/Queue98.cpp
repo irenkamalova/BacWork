@@ -73,9 +73,29 @@ void Queue::modules_queue(vector<Module> vals) {
 	int size = vals.size();
 	vector<pthread_t> thids(100);
     struct thread_data thrdarray[20];
+
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);    
+ 
+    cpu_set_t cpus;
+    CPU_ZERO(&cpus);
+    int cpu_id = 0;
+    
 	for(int i = 0; i < size; i++) {
 	        thrdarray[i].runner = this;
 	        thrdarray[i].arg = &vals[i];
+            if(vals[i].get_time_for_sleep() == 1) {
+                CPU_ZERO(&cpus);
+                CPU_SET(cpu_id, &cpus);	            
+                pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+                if(pthread_create(&thids[i], &attr, module, 
+                        (void *)&thrdarray[i])) {
+		            cerr << "Error on thread create!\n";
+		            exit(EXIT_FAILURE);					
+		        }
+		        cpu_id++;
+            }
+            else	        
 			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module,
 					&thrdarray[i])) {
 				cerr << "Error on thread create!\n";
@@ -171,16 +191,36 @@ int Queue::run(int flows_auto, int flows_search) {
 	}
 	vector<pthread_t> generals_threads(3);
 	vector<pthread_t> thids(100);
+	
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	
+	cpu_set_t cpus;
+	CPU_ZERO(&cpus);
+	int cpu_id = 0;
 
 	starttime = timestamp();	
 	for(int i = 0; i < general.size(); i++ ) {
-	        thrdarray[i].runner = this;
-	        thrdarray[i].arg = &general[i];
-			if (pthread_create(&generals_threads[i], (pthread_attr_t *) NULL, module,
-					(void *)&thrdarray[i])) {
-				cerr << "Error on thread create!\n";
-				exit(EXIT_FAILURE);
-			}
+        thrdarray[i].runner = this;
+        thrdarray[i].arg = &general[i];
+        
+        if(general[i].get_time_for_sleep() == 1) {
+            CPU_ZERO(&cpus);
+            CPU_SET(cpu_id, &cpus);	            
+            pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+            if(pthread_create(&generals_threads[i], &attr, module, 
+                    (void *)&thrdarray[i])) {
+		        cerr << "Error on thread create!\n";
+		        exit(EXIT_FAILURE);					
+		    }
+		    cpu_id++;
+        }
+        else    
+		if (pthread_create(&generals_threads[i], (pthread_attr_t *) NULL, module,
+				(void *)&thrdarray[i])) {
+			cerr << "Error on thread create!\n";
+			exit(EXIT_FAILURE);
+		}
 	}
 	int k = 1;
 	for(int i = 0; i < flows_auto; i++) {
@@ -193,11 +233,21 @@ int Queue::run(int flows_auto, int flows_search) {
 			}
 			k++;
 	}
-	
+	pthread_attr_t tattr;
+	if(pthread_attr_init (&tattr)) {
+        cerr << "Error on attributes init!\n";
+		exit(EXIT_FAILURE);
+	}
+	//*//
+    if(pthread_attr_setscope(&tattr, PTHREAD_SCOPE_SYSTEM)) {
+        cerr << "Error on attributes setscope!\n";
+		exit(EXIT_FAILURE);
+	} 
+	//*/   	
 	for(int i = 0; i < flows_search; i++) {
 	        thrdarrays[k - 1].runner = this;
 	        thrdarrays[k - 1].vals = search[i];
-			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
+			if (pthread_create(&thids[k - 1], &tattr, modules,
 					(void *)&thrdarrays[k - 1])) {
 				cerr << "Error on thread create!\n";
 				exit(EXIT_FAILURE);
@@ -209,7 +259,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 100000;
+	int sleep_time = 1000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -317,7 +367,8 @@ void Queue::module_queue(Module *vals) {
 		int number_of_current_pair = vals->get_nsopi_el(i);
 		
 		if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
-			usleep(vals->get_time_for_sleep());
+		    if(vals->get_time_for_sleep() != 1)
+		        usleep(0);
 		}		
 	    else while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
 	        if(vals->get_par(i) == 1)
@@ -346,7 +397,7 @@ void Queue::module_queue(Module *vals) {
             current += vals->get_data_amount();
             if(!ifsend1) {
                 flag_mes_received = false;
-                usleep(vals->get_time_for_sleep());
+                usleep(0);
             }
         }
         else ifsend1 = true;
