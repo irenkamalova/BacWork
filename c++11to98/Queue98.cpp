@@ -259,7 +259,7 @@ int Queue::run(int flows_auto, int flows_search) {
 	
 	//Start here SyncSignal (SS) module:
 	index_for_file++;
-	int sleep_time = 1000;
+	int sleep_time = 10000;
 	int index = 0;
 	int propusk = 0;
 	//starttime = timestamp();
@@ -346,83 +346,74 @@ void Queue::module_queue(Module *vals) {
     }
     fout.close();
     */
-	int count = 0;
-	bool ifsend1 = false;
+
 	double counter = 0.5;
 	double current = vals->get_data_amount();
-
-	bool flag_mes_received = false;
+	short messages = 0; // количество сообщений
 	int index = 0;
-	long long int t_i = (long long int) starttime;	
 	int numeric_of_pair_for_input = vals->get_npi();
+	int numeric_of_pair_for_output = vals->get_npo();
+	int number_of_current_pair;
+	int number_of_current_pair_out;
     //cout << vals->get_name() << vals->get_par(0) << endl;	
     while( (long long int)(timestamp() - starttime) < 10000000000) {
+		cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
 	    if((long long int)(timestamp() - starttime) < 0) {
 	        cout << "Error 270 " << endl;
             cout << vals->get_name() << endl;
-	    }    
-	//cout << vals->get_name() << (long long int)(timestamp() - starttime) << endl;
+	    }
+		if(vals->get_data_amount() != 1) {
+			if (current < counter) {
+				messages = 0;
+			}
+			else {
+				messages = 1;
+				counter += 1.0;
+			}
+			current += vals->get_data_amount();
+		}
+
 	
-	for(int i = 0; i < numeric_of_pair_for_input; i++) {
-		int number_of_current_pair = vals->get_nsopi_el(i);
-		
-		if(pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
-		    if(vals->get_time_for_sleep() != 1)
-		        usleep(0);
-		}		
-	    else while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
-	        if(vals->get_par(i) == 1)
-	            flag_mes_received = true;
-			receive_message(number_of_current_pair);
-
-			array_for_file[vals->get_index_for_file()][index++] = 2;
-
-			for(int l = 0; l < vals->get_th(i); l++) {
-				long long int result = 1;
-				for (int k = 1; k <= 250; k++) {
-					result = result * k;
+		for(int i = 0; i < numeric_of_pair_for_input; i++) {
+			number_of_current_pair = vals->get_nsopi_el(i);
+			while (pairs[number_of_current_pair].first == pairs[number_of_current_pair].second) {
+				if(vals->get_time_for_sleep() != 1)
+					usleep(0);
+				if( (long long int)(timestamp() - starttime) < 10000000000 )
+					break;
+			}
+			while(pairs[number_of_current_pair].first != pairs[number_of_current_pair].second) {
+				//cout << vals->get_name() << "cycled2" << endl;
+				receive_message(number_of_current_pair);
+				array_for_file[vals->get_index_for_file()][index++] = 2;
+				for(int l = 0; l < vals->get_th(i); l++) {
+					long long int result = 1;
+					for (int k = 1; k <= 250; k++) {
+						result = result * k;
+					}
+				}
+				if(vals->get_par(i) == 1) {
+					for(int k = 0; k < messages; k++) {
+						for(int m = 0; m < numeric_of_pair_for_output; m++) {
+							for(int l = 0; l < vals->get_tf(i); l++) {
+								long long int result = 1;
+								for (int n = 1; n <= 250; n++) {
+									result = result * n;
+								}
+							}
+							number_of_current_pair_out = vals->get_nsopo_el(i);
+							send_message(number_of_current_pair_out);
+							array_for_file[vals->get_index_for_file()][index++] = 1;
+						}
+					}
 				}
 			}
-		}
-	}
-	if(flag_mes_received) {
-	    if(vals->get_data_amount() != 1) {
-            if(current < counter) {
-                ifsend1 = false;
-            }
-            else {
-                ifsend1 = true;
-                counter += 1.0;
-            }
-            current += vals->get_data_amount();
-            if(!ifsend1) {
-                flag_mes_received = false;
-                usleep(0);
-            }
-        }
-        else ifsend1 = true;
-	    if(ifsend1) {
-	        int numeric_of_pair_for_output = vals->get_npo();
-	        for(int i = 0; i < numeric_of_pair_for_output; i++) {
-		        int number_of_current_pair = vals->get_nsopo_el(i);
-		        for(int l = 0; l < vals->get_tf(i); l++) {
-			        long long int result = 1;
-			        for (int k = 1; k <= 250; k++) {
-				        result = result * k;
-			        }
-		        }
-		        send_message(number_of_current_pair);
-		        array_for_file[vals->get_index_for_file()][index++] = 1;
-		        //array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-	        } 
-	        ifsend1 = false;
 	    }
-	    flag_mes_received = false;
     }
-	    
-    }
-    //cout << vals->get_name() << "finished" << endl;
+	cout << vals->get_name() << "finished" << endl;
 }
+
+
 
 
 
@@ -459,8 +450,8 @@ void Queue::write_to_file(vector<Module> vals, int num_object) {
         string num_obj(buffer);
 
 	//string s = "./queue/result_queue" + num_obj + ".txt";
-	string s2 = "./queue/messages_queue" + num_obj + ".txt";
 	//ofstream fout(s);
+	string s2 = "/home/irisha/.clion11/system/cmake/generated/8678f0dd/8678f0dd/Debug/queue/messages_queue" + num_obj + ".txt";
 	char * cstr = new char [s2.length()+1];
 	strcpy (cstr, s2.c_str());
 	ofstream fout2(cstr);
