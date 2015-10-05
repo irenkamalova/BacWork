@@ -233,21 +233,12 @@ int Queue::run(int flows_auto, int flows_search) {
 			}
 			k++;
 	}
-	pthread_attr_t tattr;
-	if(pthread_attr_init (&tattr)) {
-        cerr << "Error on attributes init!\n";
-		exit(EXIT_FAILURE);
-	}
-	//*//
-    if(pthread_attr_setscope(&tattr, PTHREAD_SCOPE_SYSTEM)) {
-        cerr << "Error on attributes setscope!\n";
-		exit(EXIT_FAILURE);
-	} 
+
 	//*/   	
 	for(int i = 0; i < flows_search; i++) {
 	        thrdarrays[k - 1].runner = this;
 	        thrdarrays[k - 1].vals = search[i];
-			if (pthread_create(&thids[k - 1], &tattr, modules,
+			if (pthread_create(&thids[k - 1], (pthread_attr_t *) NULL, modules,
 					(void *)&thrdarrays[k - 1])) {
 				cerr << "Error on thread create!\n";
 				exit(EXIT_FAILURE);
