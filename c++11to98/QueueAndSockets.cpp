@@ -16,3 +16,16 @@
 #include <netinet/in.h>
 #include <sys/un.h>
 
+using namespace std;
+
+QueueAndSockets::QueueAndSockets() { }
+
+QueueAndSockets::~QueueAndSockets() { }
+
+void QueueAndSockets::run(vector<Module> m) {
+    for(vector<Module>::iterator it = m.begin(); it != m.end();
+        ++it) {
+        cout << it->get_name() << endl;
+    }
+}
+

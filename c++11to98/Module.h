@@ -14,6 +14,24 @@ using namespace std;
 
 class Module {
 public:
+	struct message_input {
+		string name;
+		string name_from;
+		int time_hand;
+		bool parameter;
+		bool connection_type;
+		int channel_from;
+
+	};
+
+	struct message_output {
+		string name;
+		string name_to;
+		int time_form;
+		bool connection_type;
+		int channel_to;
+	};
+
 	Module();
 	virtual ~Module();
 
@@ -23,30 +41,27 @@ public:
 	void set_number(int number);
 	int get_number();
 
-	void set_dti(string dti, int i);
-	string get_dti(int i);
-
-	void set_dto(string dti, int i);
-	string get_dto(int i);
-
 	void set_data_amount(double data_amaunt);
 	double get_data_amount();
 
-	void set_th(int th, int i);
-	int get_th(int i);
+	void set_message_input(message_input m_i, int index);
+	message_input get_message_input(int index);
+	//message_input get_all_message_input();
 
-	void set_tf(int tf, int i);
-	int get_tf(int i);
-	
-	void set_par(int par, int i);
-	int get_par(int i);
+	void set_message_output(message_output m_o, int index);
+	message_output get_message_output(int index);
+	//message_output get_all_message_output();
 
+	// control number of messages input ans output
 	void set_nti(int i);
 	void set_nto(int i);
 	void inc_nti();
 	void inc_nto();
 	int get_nti();
 	int get_nto();
+
+
+
 	void set_receiver(int element, int index);
 	int get_receiver(int index);
 
@@ -55,6 +70,9 @@ public:
 
 	void set_index_for_file(int index);
 	int get_index_for_file();
+
+	//for both
+
 	//for queue
 	void set_npi(int npi);
 	void set_npo(int npo);
@@ -67,9 +85,6 @@ public:
 	void set_nsopo_el(int element, int index);
 	int get_nsopi_el(int index);
 	int get_nsopo_el(int index);
-
-	void set_index_cond_vars(int index_cond_var, int index);
-	int get_index_cond_vars(int index);
 
 	//for sockets
 	void set_port(int port);
@@ -85,28 +100,26 @@ public:
 	void set_n_of_s_i(int number);
 	int get_n_of_s_i();
 	void inc_n_of_s_i();
+
+
+
 private:
 
 	string name;
-	string data_type_input[SIZE];
-	string data_type_output[SIZE];
 	double data_amount;
-	int time_hand[SIZE];
-	int time_form[SIZE];
-	int parametrs[SIZE];
-	int number_of_type_input;
-	int number_of_type_output;
+	int number_of_messages_input;
+	int number_of_messages_output;
 	int receivers[SIZE];
 	int number;
 	int time_for_sleep;
 
+	//for both
+
+
 	//for queue
 	int nsopi[20]; //numbers_of_pairs_input
 	int nsopo[20]; //numbers_of_pairs_output
-	int npi;//number of pairs for input
-	int npo;//number of pairs for output
-	int index_my_cond_var;
-	int index_cond_vars[SIZE]; // indexes for conditions variables that have to notify after sending message
+
 	int index_for_file;
 
 	//for sockets
@@ -114,6 +127,11 @@ private:
 	int sockets_for_send[SIZE];
 	int number_of_sockets;
 	int number_of_sockets_input;
+
+
+
+	message_input message_input_array[SIZE];
+	message_output message_output_array[SIZE];
 };
 
 #endif /* MODULE_H_ */

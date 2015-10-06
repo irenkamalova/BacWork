@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Module.h"
 #include "Queue.h"
+#include "QueueAndSockets.h"
 //#include "Socket.h"
 #include <vector>
 #include <cstring>
@@ -10,53 +11,24 @@
 #include <stdlib.h>  //atoi
 
 vector<Module> parser(string s);
+vector<Module> new_parser(string s);
 void check_parser(vector<Module> vals, string s);
 
 int main(int argc, char *argv[]) {
-	const char* queue_way = "queue";
-	const char* socket_way = "socket";
 	const char* both_way = "queue_and_socket";
 	
 	if (argc == 4) {
-        vector<Module> general = parser("modules_general.txt");
-        check_parser(general, "check_general.txt");
-        vector<Module> a = parser("modules_auto.txt");
-        vector<Module> b = parser("modules_search.txt");
+        //vector<Module> general = parser("modules_general.txt");
+        //vector<Module> a = parser("modules_auto.txt");
+        //vector<Module> b = parser("modules_search.txt");
         //check_parser(a, "a.txt");
         //return 0;
         int flow1 = atoi(argv[2]);
         int flow2 = atoi(argv[3]);
-		if (strcmp(argv[1], queue_way) == 0) {
-			Queue *queue = new Queue();
-			queue->set_general(general);
-            queue->m_t = Queue::AUTO;
-			for(int i = 0; i < flow1; i++) {
-			    queue->create_pairs(a, i, queue->m_t);
-			}
-            queue->m_t = Queue::SEARCH;
-			for(int i = 0; i < flow2; i++) {
-			    queue->create_pairs(b, i, queue->m_t);
-			}
-			queue->run(flow1, flow2);
-            delete queue;
-		} else if (strcmp(argv[1], socket_way) == 0) {
-		/*
-			Socket *socket = new Socket();
-			socket->set_general(general);
-            socket->m_t = Socket::AUTO;
-			for(int i = 0; i < flow1; i++) {
-			    socket->create_ports(a, i, socket->m_t);
-			}
-            socket->m_t = Socket::SEARCH;
-			for(int i = 0; i < flow2; i++) {
-			    socket->create_ports(b, i, socket->m_t);
-			}
-			socket->run(flow1, flow2);
-            delete socket;
-            */
-		} else if (strcmp(argv[1], both_way) == 0) {
-			vector<Module> modules = new_parser("modules.txt");
-
+		if (strcmp(argv[1], both_way) == 0) {
+			vector<Module> modules = parser("/home/newuser/modules.txt");
+			QueueAndSockets *queueAndSockets = new QueueAndSockets;
+			queueAndSockets->run(modules);
 		}
 
 		else {
@@ -71,80 +43,81 @@ int main(int argc, char *argv[]) {
 }
 
 vector<Module> parser(string s) {
-    char * cstr = new char [s.length()+1];
-    strcpy(cstr, s.c_str());
+	char * cstr = new char [s.length()+1];
+	strcpy(cstr, s.c_str());
 	ifstream fin(cstr);
 	char buff[SIZE];
-	int i = 0, l = 0;
-	int k = 0, m = 0;
-	vector<Module> vals;
+	int i = 0;//number of modules
+	int number_of_mes_input;
+	int number_of_mes_output;
 
+	vector<Module> vals;
 	while (fin >> buff) {
 		if (strcmp(buff, "-") == 0) {
-			i = i - 1;
-			k = k + 1;
+			i--;
 		} else {
 			Module *module = new Module;
 			module->set_name(buff);
 			vals.push_back(*module);
-			k = 0;
 			vals[i].set_number(i);
-			vals[i].set_nti(0);
-			vals[i].set_nto(0);
-			int time;
-			fin >> time;
-			vals[i].set_time_for_sleep(time);
-			double data_amount;
-			fin >> data_amount;
-			vals[i].set_data_amount(data_amount);
-            delete module;
+			number_of_mes_input = 0; // number of input data
+			vals[i].set_nti(number_of_mes_input);
+			number_of_mes_output = 0; // number of output data
+			vals[i].set_nto(number_of_mes_output);
+			int port;
+			fin >> port;
+			vals[i].set_port(port);
+
 		}
 		fin >> buff;
 		if (strcmp(buff, "-") != 0) {
-			vals[i].set_dti(buff, k);
-			int parametr;
-			fin >> parametr;
-            
+
+			Module::message_input m_i;
+
+			m_i.name = buff;
+
 			int time_hand;
 			fin >> time_hand;
-			int number_of_data_type = vals[i].get_nti();
-			vals[i].set_th(time_hand, number_of_data_type);
-			vals[i].set_par(parametr, number_of_data_type);
-			
-			vals[i].inc_nti();
-		} else
+			m_i.time_hand = time_hand;
+
 			fin >> buff;
+			m_i.name_from = buff;
+
+			bool parameter;
+			fin >> parameter;
+			m_i.parameter = parameter;
+
+			bool connection_type;
+			fin >> connection_type;
+			m_i.connection_type = connection_type;
+
+			vals[i].set_message_input(m_i, vals[i].get_nti());
+			vals[i].inc_nti();
+		}
 		fin >> buff;
 		if (strcmp(buff, "-") != 0) {
-			vals[i].set_dto(buff, 0); //не предусматривает количество выходных сообщений > 1
+
+			Module::message_output m_o;
+
+			m_o.name = buff;
+
 			int time_form;
 			fin >> time_form;
-			int number_of_data_type = vals[i].get_nto();
-			vals[i].set_tf(time_form, number_of_data_type);
-			vals[i].inc_nto();
-		} else
+			m_o.time_form = time_form;
+
 			fin >> buff;
+			m_o.name_to = buff;
+
+			bool connection_type;
+			fin >> connection_type;
+			m_o.connection_type = connection_type;
+
+			vals[i].set_message_output(m_o, vals[i].get_nto());
+			vals[i].inc_nto();
+		}
 		i++;
 	}
-	fin.close();
-	
-	return vals;
-}
 
-void check_parser(vector<Module> vals, string s) {
-    char * cstr = new char [s.length()+1];
-    strcpy(cstr, s.c_str());
-    ofstream fout(cstr);
-	for(int i = 0; i < vals.size(); i++) {
-		fout << vals[i].get_number() << " " << vals[i].get_name() << " " << vals[i].get_data_amount()
-				<< "  " << vals[i].get_time_for_sleep() << " ";
-		for(int k = 0; k < vals[i].get_nti(); k++) {
-			fout << vals[i].get_dti(k) << " " << vals[i].get_th(k) << " ";
-		}
-		for(int k = 0; k < vals[i].get_nto(); k++) {
-					fout << vals[i].get_dto(k) << " " << vals[i].get_tf(k) << " ";
-		}
-	fout << endl;
-	}
-	fout.close();
+	fin.close();
+	return vals;
 }

@@ -5,10 +5,14 @@
 #ifndef BACWORK_QUEUEANDSOCKETS_H
 #define BACWORK_QUEUEANDSOCKETS_H
 
+#include "Module.h"
+#include <vector>
+
 class QueueAndSockets {
 public:
-    Queue();
-    virtual ~Queue();
+    QueueAndSockets ();
+    virtual ~QueueAndSockets ();
+    void run(vector<Module> modules);
 
 
 private:
