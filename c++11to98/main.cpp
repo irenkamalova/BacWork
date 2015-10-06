@@ -15,6 +15,7 @@ void check_parser(vector<Module> vals, string s);
 int main(int argc, char *argv[]) {
 	const char* queue_way = "queue";
 	const char* socket_way = "socket";
+	const char* both_way = "queue_and_socket";
 	
 	if (argc == 4) {
         vector<Module> general = parser("modules_general.txt");
@@ -53,7 +54,12 @@ int main(int argc, char *argv[]) {
 			socket->run(flow1, flow2);
             delete socket;
             */
-		} else {
+		} else if (strcmp(argv[1], both_way) == 0) {
+			vector<Module> modules = new_parser("modules.txt");
+
+		}
+
+		else {
 			cerr << "Wrong simulator name! Input queue or socket";
 			return 1;
 		}
