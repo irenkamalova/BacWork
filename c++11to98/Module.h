@@ -23,6 +23,7 @@ public:
 		bool parameter;
 		bool connection_type;
 		int channel_from;
+		int socket_from;
 
 	};
 
@@ -32,6 +33,7 @@ public:
 		int time_form;
 		bool connection_type;
 		int channel_to;
+		int socket_to;
 	};
 
 	Module();
