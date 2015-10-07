@@ -91,6 +91,12 @@ vector<Module> parser(string s) {
 			fin >> connection_type;
 			m_i.connection_type = connection_type;
 
+			if(!connection_type) { //it means that connection type = queue
+				int channel_number;
+				fin >> channel_number;
+				m_i.channel_from = channel_number;
+			}
+
 			vals[i].set_message_input(m_i, vals[i].get_nti());
 			vals[i].inc_nti();
 		}
@@ -111,6 +117,10 @@ vector<Module> parser(string s) {
 			bool connection_type;
 			fin >> connection_type;
 			m_o.connection_type = connection_type;
+
+			int channel_number;
+			fin >> channel_number;
+			m_o.channel_to = channel_number;
 
 			vals[i].set_message_output(m_o, vals[i].get_nto());
 			vals[i].inc_nto();

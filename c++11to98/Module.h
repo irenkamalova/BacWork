@@ -9,6 +9,8 @@
 #define MODULE_H_
 
 #include <string>
+#include <vector>
+
 const int SIZE = 100;
 using namespace std;
 
@@ -46,11 +48,11 @@ public:
 
 	void set_message_input(message_input m_i, int index);
 	message_input get_message_input(int index);
-	//message_input get_all_message_input();
+	vector<message_input> get_all_message_input();
 
 	void set_message_output(message_output m_o, int index);
 	message_output get_message_output(int index);
-	//message_output get_all_message_output();
+	vector<message_output> get_all_message_output();
 
 	// control number of messages input ans output
 	void set_nti(int i);
@@ -60,31 +62,12 @@ public:
 	int get_nti();
 	int get_nto();
 
-
-
-	void set_receiver(int element, int index);
-	int get_receiver(int index);
-
 	void set_time_for_sleep(int ts);
 	int get_time_for_sleep();
 
 	void set_index_for_file(int index);
 	int get_index_for_file();
 
-	//for both
-
-	//for queue
-	void set_npi(int npi);
-	void set_npo(int npo);
-	void inc_npi();
-	void inc_npo();
-	int get_npi();
-	int get_npo();
-
-	void set_nsopi_el(int element, int index);
-	void set_nsopo_el(int element, int index);
-	int get_nsopi_el(int index);
-	int get_nsopo_el(int index);
 
 	//for sockets
 	void set_port(int port);
@@ -109,16 +92,10 @@ private:
 	double data_amount;
 	int number_of_messages_input;
 	int number_of_messages_output;
-	int receivers[SIZE];
 	int number;
 	int time_for_sleep;
 
 	//for both
-
-
-	//for queue
-	int nsopi[20]; //numbers_of_pairs_input
-	int nsopo[20]; //numbers_of_pairs_output
 
 	int index_for_file;
 
@@ -128,10 +105,8 @@ private:
 	int number_of_sockets;
 	int number_of_sockets_input;
 
-
-
-	message_input message_input_array[SIZE];
-	message_output message_output_array[SIZE];
+	vector<message_input> message_input_array;
+	vector<message_output> message_output_array;
 };
 
 #endif /* MODULE_H_ */
