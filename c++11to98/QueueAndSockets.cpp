@@ -45,6 +45,7 @@ struct receiver_queue : receiver {
 
 };
 
+
 struct receiver_socket : receiver {
     bool wait_for_message(int socket) {
         int result = 0;
@@ -68,46 +69,97 @@ uint64_t timestamp() {
 
 uint64_t starttime;
 
-void QueueAndSockets::run(vector<Module> m) {
-    for(vector<Module>::iterator it = m.begin(); it != m.end();
-        ++it) {
-        //create sockets
-        vector<Module::message_input> m_i = it->get_all_message_input();
+struct thread_data {
+    QueueAndSockets *runner;
+    Module *arg;
+};
 
-        //sockets for receiving
-        for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-            if(it1->connection_type) { // type = socket
-                int socket_for_receiving = create_sock_for_receiving(it->get_port());
-                it1->socket_from = accept(socket_for_receiving, NULL, NULL);
-                if (it1->socket_from < 0) {
-                    perror("accept");
-                    cerr << it->get_port() << endl;
-                    exit(EXIT_FAILURE);
-                }
-            }
+void* module_prom(void *threadarg) {
+    cout << "in mod_prom" << endl;
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    QueueAndSockets *runner = my_data->runner;
+    Module *arg = my_data->arg;
+    runner->module(arg);
+}
+
+
+void QueueAndSockets::run(vector<Module> modules) {
+    vector<pthread_t> thids(SIZE);
+    struct thread_data threadarray[20];
+    for(int i = 0; i < modules.size(); i++) {
+        threadarray[i].runner = this;
+        threadarray[i].arg = &modules[i];
+        if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module_prom, &threadarray[i])) {
+            cerr << "Error on thread create!\n";
+            exit(EXIT_FAILURE);
         }
     }
-    for(vector<Module>::iterator it = m.begin(); it != m.end();
+    sleep(5);
+    for(vector<Module>::iterator it = modules.begin(); it != modules.end();
         ++it) {
         vector<Module::message_output> m_o = it->get_all_message_output();
         for (vector<Module::message_output>::iterator it2 = m_o.begin(); it2 != m_o.end(); ++it2) {
             if (it2->connection_type) {
+                sleep(5);
                 it2->socket_to = create_socket(it2->channel_to);
 
             }
         }
     }
 
+    for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
+         ++it) {
+        pthread_join(*it, (void **) NULL);
+    }
+
+    for(vector<Module>::iterator it = modules.begin(); it != modules.end();
+        ++it) {
+        vector<Module::message_output> m_o = it->get_all_message_output();
+        for (vector<Module::message_output>::iterator it2 = m_o.begin(); it2 != m_o.end(); ++it2) {
+            if (it2->connection_type) {
+                close(it2->socket_to);
+
+            }
+        }
+    }
 
 
 }
 long long int array_for_file[203][200000];
+
 void QueueAndSockets::module(Module *vals) {
+    cout << vals->get_name() << endl;
     int number_of_current_pair_in;
     int number_of_current_pair_out;
     int index = 0;
-    receiver *recv_object;
     vector<Module::message_input> m_i = vals->get_all_message_input();
+    //sockets for receiving
+    int socket_for_receiving;
+    if(vals->get_port() != 0)
+        socket_for_receiving = create_sock_for_receiving(vals->get_port());
+    for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+        if(it1->connection_type) { // type = socket
+            it1->socket_from = accept(socket_for_receiving, NULL, NULL);
+            if (it1->socket_from < 0) {
+                perror("accept");
+                cerr << vals->get_port() << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    cout << "I accepted all sockets!" << endl;
+
+    //close sockets for receiving
+    for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+        if (it1->connection_type) {
+            close(it1->socket_from);
+        }
+    }
+
+    /*
+    receiver *recv_object;
+
     vector<Module::message_output> m_o = vals->get_all_message_output();
     for(vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it ) {
         if(!it->connection_type)
@@ -153,6 +205,7 @@ void QueueAndSockets::module(Module *vals) {
         }
 
     }
+     */
 }
 
 void QueueAndSockets::send_message(int number_of_current_pair) {
