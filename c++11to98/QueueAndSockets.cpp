@@ -131,10 +131,10 @@ void QueueAndSockets::run(vector<Module> m) {
         }
     }
 
-
+    vector<Module>* m_addrs = &modules;
     for(int i = 0; i < modules.size(); i++) {
         threadarray[i].runner = this;
-        threadarray[i].arg = &modules[i];
+        threadarray[i].arg = m_addrs[i];
         if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module_prom, &threadarray[i])) {
             cerr << "Error on thread create!\n";
             exit(EXIT_FAILURE);
@@ -149,6 +149,7 @@ void QueueAndSockets::run(vector<Module> m) {
         for (int k = 0; k < (*m_o).size(); k ++) {
             if ((*m_o)[k].connection_type) {
                 (*m_o)[k].channel_to = create_socket((*m_o)[k].port_to);
+                (*module_addr).set_socket_for_send(k, (*m_o)[k].channel_to);
 
             }
         }
