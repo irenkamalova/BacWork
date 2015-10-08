@@ -118,9 +118,16 @@ vector<Module> parser(string s) {
 			fin >> connection_type;
 			m_o.connection_type = connection_type;
 
-			int channel_number;
-			fin >> channel_number;
-			m_o.channel_to = channel_number;
+			if(!connection_type) { //it means that connection type = queue
+				int channel_number;
+				fin >> channel_number;
+				m_o.channel_to = channel_number;
+			}
+			else { // type = socket
+				int port_number;
+				fin >> port_number;
+				m_o.port_to = port_number;
+			}
 
 			vals[i].set_message_output(m_o, vals[i].get_nto());
 			vals[i].inc_nto();

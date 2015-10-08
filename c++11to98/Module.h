@@ -33,7 +33,7 @@ public:
 		int time_form;
 		bool connection_type;
 		int channel_to;
-		int socket_to;
+		int port_to;
 	};
 
 	Module();
@@ -51,10 +51,12 @@ public:
 	void set_message_input(message_input m_i, int index);
 	message_input get_message_input(int index);
 	vector<message_input> get_all_message_input();
+	vector<message_input>* get_address_of_messages_input();
 
 	void set_message_output(message_output m_o, int index);
 	message_output get_message_output(int index);
 	vector<message_output> get_all_message_output();
+	vector<message_output>* get_address_of_messages_output();
 
 	// control number of messages input ans output
 	void set_nti(int i);

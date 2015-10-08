@@ -77,7 +77,7 @@ int Module::get_port() {
 }
 
 void Module::set_socket_for_send(int index, int socket_for_send) {
-	sockets_for_send[index] = socket_for_send;
+	message_output_array[index].channel_to = socket_for_send;
 }
 
 int Module::get_socket_for_send(int index) {
@@ -130,4 +130,12 @@ vector<Module::message_input> Module::get_all_message_input() {
 
 vector<Module::message_output> Module::get_all_message_output() {
 	return this->message_output_array;
+}
+
+vector<Module::message_input>* Module::get_address_of_messages_input() {
+	return &message_input_array;
+}
+
+vector<Module::message_output>* Module::get_address_of_messages_output() {
+	return &message_output_array;
 }

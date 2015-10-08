@@ -18,11 +18,12 @@ public:
     void module(Module *vals);
     int create_socket(int port);
     int create_sock_for_receiving(int port);
+    void create_sockets(vector<Module>* vals);
 private:
     static const int LENGTH_OF_ARRAY = 50;
 
     long long int array_for_file[203][200000];
-
+    vector<Module> modules;
 
 };
 
