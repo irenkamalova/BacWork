@@ -51,15 +51,21 @@ struct receiver_queue : receiver {
 
 
 struct receiver_socket : receiver {
+    int checkout;
     bool wait_for_message(int socket) {
         int result = 0;
         int r = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
-        cout << r << endl;
+        checkout = r;
         return (r < 0) ? true : false;
     }
     bool there_message(int socket) {
         int result = 0;
-        return (recv(socket, &result, sizeof(int), MSG_DONTWAIT) == 0) ? true : false;
+        if(checkout > 0) {
+            checkout = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
+            return true;
+        }
+        else
+            return false;
     }
     void check() {
         cout << "socket" << endl;
@@ -224,7 +230,7 @@ void QueueAndSockets::module(Module *vals) {
         while (recv_object->wait_for_message(it->channel_from)) {
                 usleep(0);
         }
-        //while(recv_object->there_message(it->channel_from)) {
+        while(recv_object->there_message(it->channel_from)) {
             //receiving
             array_for_file[vals->get_number()][index++] = 2; //bad
             for(int l = 0; l < it->time_hand; l++) {
@@ -255,10 +261,10 @@ void QueueAndSockets::module(Module *vals) {
                     cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
                 }
             }
-        //}
+        }
 
     }
-    sleep(20);
+    sleep(10);
     //close sockets for receiving
     for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
         if (it1->connection_type) {
