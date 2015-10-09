@@ -51,13 +51,18 @@ struct receiver_queue : receiver {
 
 
 struct receiver_socket : receiver {
+    int r;
     bool wait_for_message(int socket) {
         int result = 0;
-        return (recv(socket, &result, sizeof(int), MSG_DONTWAIT) <  0) ? true : false;
+
+        return recv(socket, &result, sizeof(int), MSG_DONTWAIT) != 0 ? true : false;
     }
     bool there_message(int socket) {
-        int result = 0;
-        return (recv(socket, &result, sizeof(int), MSG_DONTWAIT) == 0) ? true : false;
+        if (r == 0) {
+            r = 1;
+            return true;
+        }
+        else return false;
     }
     void check() {
         cout << "socket" << endl;
@@ -113,7 +118,7 @@ void* module_prom(void *threadarg) {
     runner->module(arg);
 }
 
-
+int sockets_array[20][20];
 
 
 void QueueAndSockets::run(vector<Module> m) {
@@ -131,7 +136,11 @@ void QueueAndSockets::run(vector<Module> m) {
         }
     }
 
-    vector<Module>* m_addrs = &modules;
+    vector<Module*> m_addrs;
+    for(int i = 0; i < modules.size(); i++) {
+        m_addrs.push_back(&modules[i]);
+    }
+
     for(int i = 0; i < modules.size(); i++) {
         threadarray[i].runner = this;
         threadarray[i].arg = m_addrs[i];
@@ -144,13 +153,12 @@ void QueueAndSockets::run(vector<Module> m) {
     //create sockets
 
     for(int i = 0; i < modules.size(); i++) {
-        Module* module_addr = &modules[i];
-        vector<Module::message_output>* m_o = (*module_addr).get_address_of_messages_output();
+        vector<Module::message_output>* m_o = (*m_addrs[i]).get_address_of_messages_output();
         for (int k = 0; k < (*m_o).size(); k ++) {
             if ((*m_o)[k].connection_type) {
                 (*m_o)[k].channel_to = create_socket((*m_o)[k].port_to);
-                (*module_addr).set_socket_for_send(k, (*m_o)[k].channel_to);
-
+                sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
+                (*m_addrs[i]).set_socket_for_send(k, (*m_o)[k].channel_to);
             }
         }
     }
@@ -159,23 +167,20 @@ void QueueAndSockets::run(vector<Module> m) {
     sender_queue *sq = new sender_queue;
     sq->send_message(0);
 
-
-
     for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
          ++it) {
         pthread_join(*it, (void **) NULL);
     }
     //close sockets
-    for(vector<Module>::iterator it = modules.begin(); it != modules.end();
-        ++it) {
-        vector<Module::message_output> m_o = it->get_all_message_output();
-        for (vector<Module::message_output>::iterator it2 = m_o.begin(); it2 != m_o.end(); ++it2) {
-            if (it2->connection_type) {
-                close(it2->channel_to);
-
+    for(int i = 0; i < modules.size(); i++) {
+        vector<Module::message_output>* m_o = (*m_addrs[i]).get_address_of_messages_output();
+        for (int k = 0; k < (*m_o).size(); k ++) {
+            if ((*m_o)[k].connection_type) {
+                close((*m_o)[k].channel_to);
             }
         }
     }
+
     array_for_file[modules.size()][0] = 0;
 
 
@@ -190,6 +195,7 @@ void QueueAndSockets::module(Module *vals) {
     int index = 0;
     string name = vals->get_name();
     vector<Module::message_input> m_i = vals->get_all_message_input();
+    vector<Module::message_output> m_o = vals->get_all_message_output();
     //sockets for receiving
     int socket_for_receiving;
     if(vals->get_port() != 0)
@@ -206,10 +212,11 @@ void QueueAndSockets::module(Module *vals) {
         }
     }
     sleep(5);
+
     receiver *recv_object;
     sender *send_object;
 
-    vector<Module::message_output> m_o = vals->get_all_message_output();
+
     for(vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it ) {
 
         if(!it->connection_type)
@@ -218,10 +225,11 @@ void QueueAndSockets::module(Module *vals) {
             recv_object = new receiver_socket;
         //check if there any message. If no, switch thread
         while (recv_object->wait_for_message(it->channel_from)) {
-            cout << vals->get_name() << endl;
+            //cout << vals->get_name() << endl;
                 usleep(0);
         }
-        while(recv_object->there_message(it->channel_from)) {
+        //while(recv_object->there_message(it->channel_from)) {
+            cout << vals->get_name() << endl;
             //receiving
             array_for_file[vals->get_number()][index++] = 2; //bad
             for(int l = 0; l < it->time_hand; l++) {
@@ -233,25 +241,26 @@ void QueueAndSockets::module(Module *vals) {
             cout << vals->get_name() << " received from " << it->name_from << endl;
             //sending
             if(it->parameter) {
-                for(vector<Module::message_output>::iterator it1 = m_o.begin(); it1 != m_o.end(); ++it1 ) {
-                    for(int l = 0; l < it1->time_form; l++) {
+                for(int k = 0; k < m_o.size(); k++ ) {
+                    for(int l = 0; l < m_o[k].time_form; l++) {
                         long long int result = 1;
                         for (int n = 1; n <= 250; n++) {
                             result = result * n;
                         }
                     }
-                    if(!it1->connection_type) { // type = queue
+                    if(!m_o[k].connection_type) { // type = queue
                         send_object = new sender_queue;
                     }
                     else { // type = socket
                         send_object = new sender_socket;
+                        m_o[k].channel_to = sockets_array[vals->get_number()][k];
                     }
-                    send_object->send_message(it1->channel_to);
+                    send_object->send_message(m_o[k].channel_to);
                     array_for_file[vals->get_index_for_file()][index++] = 1;
-                    cout << vals->get_name() << " sent to " << it1->name_to << endl;
+                    cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
                 }
             }
-        }
+        //}
 
     }
     sleep(20);
