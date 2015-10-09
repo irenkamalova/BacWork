@@ -51,18 +51,15 @@ struct receiver_queue : receiver {
 
 
 struct receiver_socket : receiver {
-    int r;
     bool wait_for_message(int socket) {
         int result = 0;
-
-        return recv(socket, &result, sizeof(int), MSG_DONTWAIT) != 0 ? true : false;
+        int r = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
+        cout << r << endl;
+        return (r < 0) ? true : false;
     }
     bool there_message(int socket) {
-        if (r == 0) {
-            r = 1;
-            return true;
-        }
-        else return false;
+        int result = 0;
+        return (recv(socket, &result, sizeof(int), MSG_DONTWAIT) == 0) ? true : false;
     }
     void check() {
         cout << "socket" << endl;
@@ -181,9 +178,9 @@ void QueueAndSockets::run(vector<Module> m) {
         }
     }
 
-    array_for_file[modules.size()][0] = 0;
+    //array_for_file[modules.size()][0] = 0;
 
-
+    cout << "program finished" << endl;
 
 }
 
@@ -225,11 +222,9 @@ void QueueAndSockets::module(Module *vals) {
             recv_object = new receiver_socket;
         //check if there any message. If no, switch thread
         while (recv_object->wait_for_message(it->channel_from)) {
-            //cout << vals->get_name() << endl;
                 usleep(0);
         }
         //while(recv_object->there_message(it->channel_from)) {
-            cout << vals->get_name() << endl;
             //receiving
             array_for_file[vals->get_number()][index++] = 2; //bad
             for(int l = 0; l < it->time_hand; l++) {
