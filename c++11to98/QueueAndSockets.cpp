@@ -22,7 +22,7 @@ using namespace std;
 QueueAndSockets::QueueAndSockets() { }
 
 QueueAndSockets::~QueueAndSockets() { }
-
+void write_to_file(vector<Module> vals, int num_object);
 vector<pair<int*, int*> > pairs(10);
 int datas[20][50];
 const int LENGTH_OF_ARRAY = 50;
@@ -223,6 +223,7 @@ void QueueAndSockets::run(vector<Module> m) {
     }
 
     //array_for_file[modules.size()][0] = 0;
+    write_to_file(m, 5);
 
     cout << "program finished" << endl;
 
@@ -368,4 +369,84 @@ int QueueAndSockets::create_sock_for_receiving(int port) {
     }
     listen(sock, 50);
     return sock;
+}
+
+void write_to_file(vector<Module> vals, int num_object) {
+
+    cout << "in " << num_object << endl;
+    char buffer[4];
+    sprintf(buffer, "%d", num_object);
+    string num_obj(buffer);
+
+    //string s = "./queue/result_queue" + num_obj + ".txt";
+    //ofstream fout(s);
+    string s2 = "/home/newuser/messages_queue" + num_obj + ".txt";
+    char * cstr = new char [s2.length()+1];
+    strcpy (cstr, s2.c_str());
+    ofstream fout2(cstr);
+
+    long long int time = 0;
+    int nano_seconds = 0;
+    int micro_seconds = 0;
+    int mini_seconds = 0;
+    int seconds = 0;
+    int count_send = 0;
+    int count_rec = 0;
+    for(int i = 0; i < vals.size(); i++) {
+        int k = 0;
+        count_send = 0;
+        count_rec = 0;
+        vals[i].set_index_for_file(vals[i].get_number());
+        while(array_for_file[vals[i].get_index_for_file()][k] != 0) {
+            //fout << vals[i].get_name();
+            if(array_for_file[vals[i].get_index_for_file()][k] == 1) {
+                //fout << " отправил в ";
+                k++;
+                count_send++;
+            }
+            else if(array_for_file[vals[i].get_index_for_file()][k] == 2) {
+                //fout << " получил в ";
+                k++;
+                count_rec++;
+            }
+            time = array_for_file[vals[i].get_index_for_file()][k];
+            seconds = time / 1000000000;
+            if(seconds > 0) {
+                mini_seconds = time / 1000000 - seconds * 1000;
+                micro_seconds = time / 1000 - mini_seconds * 1000 - seconds * 1000000;
+                nano_seconds = time - micro_seconds * 1000 - mini_seconds * 1000000 - seconds * 1000000000;
+            } else {
+                mini_seconds = time / 1000000;
+                micro_seconds = time / 1000 - mini_seconds * 1000;
+                nano_seconds = time - micro_seconds * 1000 - mini_seconds * 1000000;
+            }
+            /*
+            fout << seconds << " секунд " <<
+                    mini_seconds << " милисекунд " <<
+                    micro_seconds << " микросекунд " <<
+                    nano_seconds << " наносекунд "
+                    << endl;
+            k++;
+            */
+        }
+        //fout << endl;
+
+        if(num_object != 0) {
+
+            if(count_rec != 0)
+                fout2 << vals[i].get_name() << " получил сообщений " << count_rec
+                << " цепочек " << count_rec / vals[i].get_nti() << endl;
+            if(count_send != 0)
+                fout2 << vals[i].get_name() << " отправил сообщений " << count_send
+                << " цепочек " << count_send / vals[i].get_nto() << endl;
+        }
+        else {
+            if(vals[i].get_name() != "Рег")
+                fout2 << vals[i].get_name() << " получил сообщений " << count_rec
+                << " цепочек " << count_rec << endl;
+            else
+                fout2 << vals[i].get_name() << " отправил сообщений " << count_rec
+                << " цепочек " << count_rec / 2 << endl;
+        }
+    }
 }
