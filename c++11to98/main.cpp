@@ -1,8 +1,6 @@
 #include <iostream>
 #include "Module.h"
-#include "Queue.h"
 #include "QueueAndSockets.h"
-//#include "Socket.h"
 #include <vector>
 #include <cstring>
 #include <fstream>
@@ -26,7 +24,7 @@ int main(int argc, char *argv[]) {
         int flow1 = atoi(argv[2]);
         int flow2 = atoi(argv[3]);
 		if (strcmp(argv[1], both_way) == 0) {
-			vector<Module> modules = parser("/home/newuser/modules.txt");
+			vector<Module> modules = parser("/home/irisha/modules.txt");
 			QueueAndSockets *queueAndSockets = new QueueAndSockets;
 			queueAndSockets->run(modules);
 		}

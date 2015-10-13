@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/un.h>
 
 using namespace std;
@@ -200,6 +201,7 @@ void QueueAndSockets::module(Module *vals) {
     vector<Module::message_input> m_i = vals->get_all_message_input();
     vector<Module::message_output> m_o = vals->get_all_message_output();
     //sockets for receiving
+
     int socket_for_receiving;
     if(vals->get_port() != 0)
         socket_for_receiving = create_sock_for_receiving(vals->get_port());
@@ -214,6 +216,8 @@ void QueueAndSockets::module(Module *vals) {
             cout << vals->get_name() << " accepted " << it1->name_from << endl;
         }
     }
+
+
     sleep(5);
 
     receiver *recv_object;
@@ -293,7 +297,8 @@ int QueueAndSockets::create_socket(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = inet_addr("192.168.10.19");
+//    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("in function create_socket - connect");
         cerr << port << endl;
@@ -312,7 +317,8 @@ int QueueAndSockets::create_sock_for_receiving(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = inet_addr("192.168.10.18");
+//    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         cerr << port << endl;
         perror("bind");
