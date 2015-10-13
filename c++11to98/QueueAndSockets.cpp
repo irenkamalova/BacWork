@@ -153,7 +153,7 @@ void QueueAndSockets::run(vector<Module> m) {
             exit(EXIT_FAILURE);
         }
     }
-    sleep(2);
+    sleep(2); //we need all threads begin start their work before try to connect
     //create sockets
 
     for(int i = 0; i < modules.size(); i++) {
@@ -166,10 +166,47 @@ void QueueAndSockets::run(vector<Module> m) {
             }
         }
     }
-
+    starttime = timestamp();
     //SS module
     sender_queue *sq = new sender_queue;
-    sq->send_message(0);
+    int sleep_time = 10000;
+    int index = 0;
+    int propusk = 0;
+    //starttime = timestamp();
+    long long int t_i = (long long int) starttime;
+    if((long long int)(timestamp() - starttime) < 0) {
+        cout << "starttime error " << endl;
+        exit(EXIT_FAILURE);
+    }
+    while((long long int)(timestamp() - starttime) < TIME) {
+        if((long long int)(timestamp() - starttime) < 0) {
+            cout << "Error 187 " << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
+        for(int i = 0; i < numeric_of_pair_for_output; i++) {
+            sq->send_message(0);
+            array_for_file[11][index++] = 1;
+            //array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+        }
+        t_i = t_i + sleep_time * 1000;
+        while( (t_i - (long long int)timestamp()) < 0 ) {
+            t_i = t_i + sleep_time * 1000;
+            propusk++;
+        }
+        //cout << (t_i - (long long int)timestamp()) / 1000 << endl;
+        if(t_i - (long long int)timestamp() < 0) {
+            cout << "Error 205" << endl;
+            exit(EXIT_FAILURE);
+        }
+        int for_usleep = (t_i - (long long int)timestamp()) / 1000;
+        usleep( for_usleep );
+    }
+    cout << "AFTER SS END WORK" << endl;
+
+
+
 
     for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
          ++it) {
@@ -222,59 +259,64 @@ void QueueAndSockets::module(Module *vals) {
 
     receiver *recv_object;
     sender *send_object;
+    //cout << (long long int)(timestamp() - starttime) << endl;
+    while((long long int)(timestamp() - starttime) < TIME) {
+        //cout << (long long int)(timestamp() - starttime) << endl;
+        for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
-
-    for(vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it ) {
-
-        if(!it->connection_type)
-            recv_object = new receiver_queue;
-        else
-            recv_object = new receiver_socket;
-        //check if there any message. If no, switch thread
-        while (recv_object->wait_for_message(it->channel_from)) {
-                usleep(0);
-        }
-        while(recv_object->there_message(it->channel_from)) {
-            //receiving
-            array_for_file[vals->get_number()][index++] = 2; //bad
-            for(int l = 0; l < it->time_hand; l++) {
-                long long int result = 1;
-                for (int k = 1; k <= 250; k++) {
-                    result = result * k;
-                }
+            if (!it->connection_type)
+                recv_object = new receiver_queue;
+            else
+                recv_object = new receiver_socket;
+            //check if there any message. If no, switch thread
+            while (recv_object->wait_for_message(it->channel_from)) {
+                if((long long int)(timestamp() - starttime) < TIME)
+                    usleep(0);
+                else break;
             }
-            cout << vals->get_name() << " received from " << it->name_from << endl;
-            //sending
-            if(it->parameter) {
-                for(int k = 0; k < m_o.size(); k++ ) {
-                    for(int l = 0; l < m_o[k].time_form; l++) {
-                        long long int result = 1;
-                        for (int n = 1; n <= 250; n++) {
-                            result = result * n;
+            while (recv_object->there_message(it->channel_from)) {
+                //receiving
+                array_for_file[vals->get_number()][index++] = 2; //bad
+                for (int l = 0; l < it->time_hand; l++) {
+                    long long int result = 1;
+                    for (int k = 1; k <= 250; k++) {
+                        result = result * k;
+                    }
+                }
+                cout << vals->get_name() << " received from " << it->name_from << endl;
+                //sending
+                if (it->parameter) {
+                    for (int k = 0; k < m_o.size(); k++) {
+                        for (int l = 0; l < m_o[k].time_form; l++) {
+                            long long int result = 1;
+                            for (int n = 1; n <= 250; n++) {
+                                result = result * n;
+                            }
                         }
+                        if (!m_o[k].connection_type) { // type = queue
+                            send_object = new sender_queue;
+                        }
+                        else { // type = socket
+                            send_object = new sender_socket;
+                            m_o[k].channel_to = sockets_array[vals->get_number()][k];
+                        }
+                        send_object->send_message(m_o[k].channel_to);
+                        array_for_file[vals->get_index_for_file()][index++] = 1;
+                        cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
                     }
-                    if(!m_o[k].connection_type) { // type = queue
-                        send_object = new sender_queue;
-                    }
-                    else { // type = socket
-                        send_object = new sender_socket;
-                        m_o[k].channel_to = sockets_array[vals->get_number()][k];
-                    }
-                    send_object->send_message(m_o[k].channel_to);
-                    array_for_file[vals->get_index_for_file()][index++] = 1;
-                    cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
                 }
             }
-        }
 
+        }
     }
-    sleep(10);
     //close sockets for receiving
     for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
         if (it1->connection_type) {
             close(it1->channel_from);
         }
     }
+
+
     //*/
 }
 
@@ -297,7 +339,7 @@ int QueueAndSockets::create_socket(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = inet_addr("192.168.10.19");
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("in function create_socket - connect");
@@ -317,7 +359,7 @@ int QueueAndSockets::create_sock_for_receiving(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = inet_addr("192.168.10.18");
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         cerr << port << endl;

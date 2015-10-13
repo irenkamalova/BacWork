@@ -21,7 +21,7 @@ public:
     void create_sockets(vector<Module>* vals);
 private:
     static const int LENGTH_OF_ARRAY = 50;
-
+    static const long long int TIME = 15000000000;
     long long int array_for_file[203][200000];
     vector<Module> modules;
 
