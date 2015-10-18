@@ -15,26 +15,22 @@ void check_parser(vector<Module> vals, string s);
 int main(int argc, char *argv[]) {
 	const char* both_way = "queue_and_socket";
 	
-	if (argc == 4) {
-        //vector<Module> general = parser("modules_general.txt");
-        //vector<Module> a = parser("modules_auto.txt");
-        //vector<Module> b = parser("modules_search.txt");
-        //check_parser(a, "a.txt");
-        //return 0;
-        int flow1 = atoi(argv[2]);
-        int flow2 = atoi(argv[3]);
-		if (strcmp(argv[1], both_way) == 0) {
-			vector<Module> modules = parser("/home/newuser/modules.txt");
-			QueueAndSockets *queueAndSockets = new QueueAndSockets;
-			queueAndSockets->run(modules);
+	if (argc == 2) {
+		int my_machine = atoi(argv[1]);
+		vector<Module> modules = parser("/home/irisha/modules.txt");
+		vector<Module> my_modules; //modules for this machine
+		for(int i = 0; i < modules.size(); i++) {
+			if(modules[i].get_machine() == my_machine) {
+				my_modules.push_back(modules[i]);
+			}
 		}
 
-		else {
-			cerr << "Wrong simulator name! Input queue or socket";
-			return 1;
-		}
+		QueueAndSockets *queueAndSockets = new QueueAndSockets;
+		queueAndSockets->run(my_modules);
+
+
 	} else {
-		cerr << "Wrong number of arguments. Input name of simulator and flows.";
+		cerr << "Wrong number of arguments. Input the number of your machine.";
 		return 1;
 	}
 	return 0;
@@ -62,9 +58,18 @@ vector<Module> parser(string s) {
 			vals[i].set_nti(number_of_mes_input);
 			number_of_mes_output = 0; // number of output data
 			vals[i].set_nto(number_of_mes_output);
+
+			int machine;
+			fin >> machine;
+			vals[i].set_machine(machine);
+
 			int port;
 			fin >> port;
 			vals[i].set_port(port);
+
+			string address;
+			fin >> address;
+			vals[i].set_my_ip_address(address);
 
 		}
 		fin >> buff;
@@ -93,6 +98,12 @@ vector<Module> parser(string s) {
 				int channel_number;
 				fin >> channel_number;
 				m_i.channel_from = channel_number;
+
+			}
+			else { 	 			  //connection type = socket
+				string ip_address;
+				fin >> ip_address;
+				m_i.ip_address_from = ip_address;
 			}
 
 			vals[i].set_message_input(m_i, vals[i].get_nti());
@@ -125,6 +136,10 @@ vector<Module> parser(string s) {
 				int port_number;
 				fin >> port_number;
 				m_o.port_to = port_number;
+
+				string ip_address;
+				fin >> ip_address;
+				m_o.ip_address_to = ip_address;
 			}
 
 			vals[i].set_message_output(m_o, vals[i].get_nto());

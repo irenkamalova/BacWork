@@ -13,12 +13,10 @@ public:
     QueueAndSockets ();
     virtual ~QueueAndSockets ();
     void run(vector<Module> modules);
-    void send_message(int number_of_current_pair);
     static void receive_message(int number_of_current_pair);
     void module(Module *vals);
-    int create_socket(int port);
-    int create_sock_for_receiving(int port);
-    void create_sockets(vector<Module>* vals);
+    int create_socket(int port, string ip_address);
+    int create_sock_for_receiving(int port, string ip_address);
 private:
     static const int LENGTH_OF_ARRAY = 50;
     static const long long int TIME = 15000000000;

@@ -24,7 +24,7 @@ public:
 		bool connection_type;
 		int channel_from;
 		int socket_from;
-
+		string ip_address_from;
 	};
 
 	struct message_output {
@@ -34,6 +34,7 @@ public:
 		bool connection_type;
 		int channel_to;
 		int port_to;
+		string ip_address_to;
 	};
 
 	Module();
@@ -44,6 +45,10 @@ public:
 
 	void set_number(int number);
 	int get_number();
+
+	void set_machine(int machine);
+	int get_machine();
+
 
 	void set_data_amount(double data_amaunt);
 	double get_data_amount();
@@ -77,22 +82,15 @@ public:
 	void set_port(int port);
 	int get_port();
 
-	void set_n_of_s(int number);
-	int get_n_of_s();
-	void inc_n_of_s();
-
-	void set_socket_for_send(int index, int socket_for_send);
-	int get_socket_for_send(int index);
-
-	void set_n_of_s_i(int number);
-	int get_n_of_s_i();
-	void inc_n_of_s_i();
+	void set_my_ip_address(string ip_address);
+	string get_my_ip_address();
 
 
 
 private:
 
 	string name;
+	int machine;
 	double data_amount;
 	int number_of_messages_input;
 	int number_of_messages_output;
@@ -100,14 +98,11 @@ private:
 	int time_for_sleep;
 
 	//for both
-
 	int index_for_file;
 
 	//for sockets
 	int port;
-	int sockets_for_send[SIZE];
-	int number_of_sockets;
-	int number_of_sockets_input;
+	string my_ip_address;
 
 	vector<message_input> message_input_array;
 	vector<message_output> message_output_array;

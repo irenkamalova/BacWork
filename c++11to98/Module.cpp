@@ -76,14 +76,6 @@ int Module::get_port() {
 	return port;
 }
 
-void Module::set_socket_for_send(int index, int socket_for_send) {
-	message_output_array[index].channel_to = socket_for_send;
-}
-
-int Module::get_socket_for_send(int index) {
-	return sockets_for_send[index];
-}
-
 void Module::set_index_for_file(int index) {
 	index_for_file = index;
 }
@@ -100,30 +92,6 @@ int Module::get_time_for_sleep() {
 	return time_for_sleep;
 }
 
-void Module::set_n_of_s(int number) {
-	number_of_sockets = number;
-}
-
-int Module::get_n_of_s() {
-	return number_of_sockets;
-}
-
-void Module::inc_n_of_s() {
-	number_of_sockets++;
-}
-
-void Module::set_n_of_s_i(int number) {
-	number_of_sockets_input = number;
-}
-
-int Module::get_n_of_s_i() {
-	return number_of_sockets_input;
-}
-
-void Module::inc_n_of_s_i() {
-	number_of_sockets_input++;
-}
-
 vector<Module::message_input> Module::get_all_message_input() {
 	return this->message_input_array;
 }
@@ -138,4 +106,20 @@ vector<Module::message_input>* Module::get_address_of_messages_input() {
 
 vector<Module::message_output>* Module::get_address_of_messages_output() {
 	return &message_output_array;
+}
+
+void Module::set_machine(int machine) {
+	this->machine = machine;
+}
+
+int Module::get_machine() {
+	return this->machine;
+}
+
+void Module::set_my_ip_address(string ip_address) {
+	this->my_ip_address = ip_address;
+}
+
+string Module::get_my_ip_address() {
+	return this->my_ip_address;
 }

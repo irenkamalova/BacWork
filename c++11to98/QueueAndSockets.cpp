@@ -162,7 +162,6 @@ void QueueAndSockets::run(vector<Module> m) {
             if ((*m_o)[k].connection_type) {
                 (*m_o)[k].channel_to = create_socket((*m_o)[k].port_to);
                 sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
-                (*m_addrs[i]).set_socket_for_send(k, (*m_o)[k].channel_to);
             }
         }
     }
@@ -330,7 +329,7 @@ void QueueAndSockets::receive_message(int number_of_current_pair) {
         pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
 }
 
-int QueueAndSockets::create_socket(int port) {
+int QueueAndSockets::create_socket(int port, string ip_address) {
     int sock;
     struct sockaddr_in addr;
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -340,7 +339,8 @@ int QueueAndSockets::create_socket(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    const char *cstr = ip_address.c_str();
+    addr.sin_addr.s_addr = inet_addr(cstr);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("in function create_socket - connect");
@@ -350,7 +350,7 @@ int QueueAndSockets::create_socket(int port) {
     return sock;
 }
 
-int QueueAndSockets::create_sock_for_receiving(int port) {
+int QueueAndSockets::create_sock_for_receiving(int port, string ip_address) {
     int sock;
     struct sockaddr_in addr;
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -360,7 +360,8 @@ int QueueAndSockets::create_sock_for_receiving(int port) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    const char *cstr = ip_address.c_str();
+    addr.sin_addr.s_addr = inet_addr(cstr);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         cerr << port << endl;
