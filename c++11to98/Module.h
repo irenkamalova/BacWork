@@ -71,6 +71,9 @@ public:
 	int get_nti();
 	int get_nto();
 
+	void set_affectation(bool aff);
+	bool get_affectation();
+
 	void set_time_for_sleep(int ts);
 	int get_time_for_sleep();
 
@@ -96,6 +99,7 @@ private:
 	int number_of_messages_output;
 	int number;
 	int time_for_sleep;
+	bool affectation;
 
 	//for both
 	int index_for_file;

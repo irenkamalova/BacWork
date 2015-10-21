@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
 		QueueAndSockets *queueAndSockets = new QueueAndSockets;
 		queueAndSockets->run(my_modules);
-
+		delete(queueAndSockets);
 
 	} else {
 		cerr << "Wrong number of arguments. Input the number of your machine.";
@@ -66,6 +66,14 @@ vector<Module> parser(string s) {
 			int port;
 			fin >> port;
 			vals[i].set_port(port);
+
+			bool aff;
+			fin >> aff;
+			vals[i].set_affectation(aff);
+
+			double amount;
+			fin >> amount;
+			vals[i].set_data_amount(amount);
 
 			string address;
 			fin >> address;

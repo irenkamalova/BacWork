@@ -123,3 +123,11 @@ void Module::set_my_ip_address(string ip_address) {
 string Module::get_my_ip_address() {
 	return this->my_ip_address;
 }
+
+void Module::set_affectation(bool aff) {
+	this->affectation = aff;
+}
+
+bool Module::get_affectation() {
+	return this->affectation;
+}
