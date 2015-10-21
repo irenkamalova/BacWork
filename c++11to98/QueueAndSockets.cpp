@@ -160,7 +160,7 @@ void QueueAndSockets::run(vector<Module> m) {
         vector<Module::message_output>* m_o = (*m_addrs[i]).get_address_of_messages_output();
         for (int k = 0; k < (*m_o).size(); k ++) {
             if ((*m_o)[k].connection_type) {
-                (*m_o)[k].channel_to = create_socket((*m_o)[k].port_to);
+                (*m_o)[k].channel_to = create_socket((*m_o)[k].port_to, (*m_o)[k].ip_address_to);
                 sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
             }
         }
@@ -230,7 +230,7 @@ void QueueAndSockets::run(vector<Module> m) {
 
 
 void QueueAndSockets::module(Module *vals) {
-    cout << vals->get_name() << endl;
+    //cout << vals->get_name() << endl;
     int number_of_current_pair_in;
     int number_of_current_pair_out;
     int index = 0;
@@ -241,7 +241,7 @@ void QueueAndSockets::module(Module *vals) {
 
     int socket_for_receiving;
     if(vals->get_port() != 0)
-        socket_for_receiving = create_sock_for_receiving(vals->get_port());
+        socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
     for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
         if(it1->connection_type) { // type = socket
             it1->channel_from = accept(socket_for_receiving, NULL, NULL);
@@ -339,8 +339,7 @@ int QueueAndSockets::create_socket(int port, string ip_address) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    const char *cstr = ip_address.c_str();
-    addr.sin_addr.s_addr = inet_addr(cstr);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("in function create_socket - connect");
@@ -361,7 +360,7 @@ int QueueAndSockets::create_sock_for_receiving(int port, string ip_address) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     const char *cstr = ip_address.c_str();
-    addr.sin_addr.s_addr = inet_addr(cstr);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 //    inet_aton("0.0.0.0", &(addr.sin_addr));
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         cerr << port << endl;
