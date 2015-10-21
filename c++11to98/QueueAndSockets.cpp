@@ -276,7 +276,7 @@ void QueueAndSockets::module(Module *vals) {
             while (recv_object->there_message(it->channel_from)) {
                 //receiving
                 array_for_file[vals->get_number()][index] = 2; //bad
-                cout << array_for_file[vals->get_number()][index] << endl;
+                cout << index << endl;
                 index++;
                 for (int l = 0; l < it->time_hand; l++) {
                     long long int result = 1;
@@ -302,7 +302,9 @@ void QueueAndSockets::module(Module *vals) {
                             m_o[k].channel_to = sockets_array[vals->get_number()][k];
                         }
                         send_object->send_message(m_o[k].channel_to);
-                        array_for_file[vals->get_index_for_file()][index++] = 1;
+                        array_for_file[vals->get_number()][index] = 1;
+                        cout << index << endl;
+                        index++;
                         cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
                     }
                 }
