@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser("/home/irisha/modules.txt");
+		vector<Module> modules = parser("/home/newuser/modules.txt");
 		vector<Module> my_modules; //modules for this machine
 		for(int i = 0; i < modules.size(); i++) {
 			if(modules[i].get_machine() == my_machine) {

@@ -17,9 +17,11 @@ public:
     void module(Module *vals);
     int create_socket(int port, string ip_address);
     int create_sock_for_receiving(int port, string ip_address);
+    void write_to_file(vector<Module> vals, int num_object);
 private:
     static const int LENGTH_OF_ARRAY = 50;
-    static const long long int TIME = 15000000000;
+    static const long long int TIME = 5000000000; // 5 seconds
+    static const long long int SLEEP_TIME = 100000;
     long long int array_for_file[203][200000];
     vector<Module> modules;
 

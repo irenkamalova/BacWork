@@ -11,11 +11,9 @@
 #include <stdlib.h> //exit
 #include <cstring>
 ///// Library for sockets
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/un.h>
 
 using namespace std;
 
@@ -26,7 +24,8 @@ void write_to_file(vector<Module> vals, int num_object);
 vector<pair<int*, int*> > pairs(10);
 int datas[20][50];
 const int LENGTH_OF_ARRAY = 50;
-long long int array_for_file[203][200000];
+
+
 
 struct receiver {
     virtual bool wait_for_message(int number_of_current_pair_in) = 0;
@@ -168,7 +167,7 @@ void QueueAndSockets::run(vector<Module> m) {
     starttime = timestamp();
     //SS module
     sender_queue *sq = new sender_queue;
-    int sleep_time = 10000;
+    long long int sleep_time = SLEEP_TIME;
     int index = 0;
     int propusk = 0;
     //starttime = timestamp();
@@ -221,7 +220,7 @@ void QueueAndSockets::run(vector<Module> m) {
         }
     }
 
-    //array_for_file[modules.size()][0] = 0;
+    array_for_file[modules.size()][0] = 0;
     write_to_file(m, 5);
 
     cout << "program finished" << endl;
@@ -276,7 +275,9 @@ void QueueAndSockets::module(Module *vals) {
             }
             while (recv_object->there_message(it->channel_from)) {
                 //receiving
-                array_for_file[vals->get_number()][index++] = 2; //bad
+                array_for_file[vals->get_number()][index] = 2; //bad
+                cout << array_for_file[vals->get_number()][index] << endl;
+                index++;
                 for (int l = 0; l < it->time_hand; l++) {
                     long long int result = 1;
                     for (int k = 1; k <= 250; k++) {
@@ -315,7 +316,7 @@ void QueueAndSockets::module(Module *vals) {
             close(it1->channel_from);
         }
     }
-
+    cout << vals->get_name() << " finished " << endl;
 
     //*/
 }
@@ -371,12 +372,17 @@ int QueueAndSockets::create_sock_for_receiving(int port, string ip_address) {
     return sock;
 }
 
-void write_to_file(vector<Module> vals, int num_object) {
+void QueueAndSockets::write_to_file(vector<Module> vals, int num_object) {
+
+
+
 
     cout << "in " << num_object << endl;
     char buffer[4];
     sprintf(buffer, "%d", num_object);
     string num_obj(buffer);
+
+
 
     //string s = "./queue/result_queue" + num_obj + ".txt";
     //ofstream fout(s);
