@@ -380,8 +380,8 @@ int QueueAndSockets::create_socket(int port, string ip_address) {
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-//    inet_aton("0.0.0.0", &(addr.sin_addr));
+    const char *cstr = ip_address.c_str();
+    addr.sin_addr.s_addr = inet_addr(cstr);
     if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("in function create_socket - connect");
         cerr << port << endl;
@@ -401,8 +401,7 @@ int QueueAndSockets::create_sock_for_receiving(int port, string ip_address) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     const char *cstr = ip_address.c_str();
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-//    inet_aton("0.0.0.0", &(addr.sin_addr));
+    addr.sin_addr.s_addr = inet_addr(cstr);
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         cerr << port << endl;
         perror("bind");
