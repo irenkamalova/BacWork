@@ -370,61 +370,13 @@ void QueueAndSockets::receive_message(int number_of_current_pair) {
         pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
 }
 
-int QueueAndSockets::create_socket(int port, string ip_address) {
-    int sock;
-    struct sockaddr_in addr;
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("in function create_socket - socket");
-        exit(EXIT_FAILURE);
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    const char *cstr = ip_address.c_str();
-    addr.sin_addr.s_addr = inet_addr(cstr);
-    if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-        perror("in function create_socket - connect");
-        cerr << port << endl;
-        exit(EXIT_FAILURE);
-    }
-    return sock;
-}
-
-int QueueAndSockets::create_sock_for_receiving(int port, string ip_address) {
-    int sock;
-    struct sockaddr_in addr;
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("socket");
-        exit(EXIT_FAILURE);
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    const char *cstr = ip_address.c_str();
-    addr.sin_addr.s_addr = inet_addr(cstr);
-    if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-        cerr << port << endl;
-        perror("bind");
-        exit(EXIT_FAILURE);
-    }
-    listen(sock, 50);
-    return sock;
-}
-
 void QueueAndSockets::write_to_file(vector<Module> vals, int num_object) {
-
-
-
 
     cout << "in " << num_object << endl;
     char buffer[4];
     sprintf(buffer, "%d", num_object);
     string num_obj(buffer);
 
-
-
-    //string s = "./queue/result_queue" + num_obj + ".txt";
-    //ofstream fout(s);
     string s2 = "/home/newuser/messages_queue" + num_obj + ".txt";
     char * cstr = new char [s2.length()+1];
     strcpy (cstr, s2.c_str());
