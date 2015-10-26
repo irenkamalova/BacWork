@@ -11,6 +11,12 @@
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
 
+#define handle_error_en(en, msg) \
+               do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
+#define handle_error(msg) \
+               do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 vector<Module> parser(string s);
 void check_parser(vector<Module> vals, string s);
 int create_socket(int port, string ip_address);
@@ -22,42 +28,82 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser("/home/newuser/modules.txt");
-		vector<Module> my_modules; //modules for this machine
+		vector<Module> modules = parser("/home/irisha/modules.txt");
+		 //modules for this machine
+		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
 			if(modules[i].get_machine() == my_machine) {
 				my_modules.push_back(modules[i]);
 			}
 		}
-		//here we need to create channels for sending and receiving
-		pthread_t thread;
-		vector<Module> *arg = &my_modules;
-		if (pthread_create(&thread, (pthread_attr_t *) NULL,
-						   create_sockets_for_receiving, arg)) {
-			cerr << "Error on thread create!\n";
-			exit(EXIT_FAILURE);
+
+		for(int i = 0; i < my_modules.size(); i++) {
+			vector<Module::message_input> m_i = modules[i].get_all_message_input();
+			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+				if(it1->connection_type) {
+					cout << it1->channel_from << endl;
+				}
+			}
 		}
+		//here we need to create channels for sending and receiving
+		int numbers;
+		vector<pthread_t> threads;
+		pthread_t thread;
+		for(int i = 0; i < my_modules.size(); i++) {
+			if(my_modules[i].get_port() != 0) {
+				threads.push_back(thread);
+
+				if (pthread_create(&threads[i], (pthread_attr_t *) NULL, create_sockets_for_receiving, &my_modules[i])) {
+					cerr << "Error on thread create!\n";
+					exit(EXIT_FAILURE);
+				}
+			}
+		}
+		sleep(2);
 
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
-			for (int k = 0; k < m_o.size(); k ++) {
+			for (int k = 0; k < m_o.size(); k++) {
 				if (m_o[k].connection_type) {
 					m_o[k].channel_to = create_socket(m_o[k].port_to, m_o[k].ip_address_to);
 					//sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
 				}
 			}
 		}
+		//int sockets[my_modules.size()];
+		cout << "here" << endl;
+		vector<int> sockets(20);
+		vector<int> * s = &sockets;
+		void * result = 0;
+		int thread_number = 0;
+		for(int i = 0; i < my_modules.size(); i++) {
+			if(my_modules[i].get_port() != 0) {
+				pthread_join(threads[thread_number], &result);
+				thread_number++;
+				vector<int> * s = (vector<int> *) result;
 
-		pthread_join(thread, (void **) NULL);
-
+				int l = 0;
+				for(int k = 0; k < my_modules[i].get_nti(); k++) {
+					if(my_modules[i].message_input_array[k].connection_type) {
+						my_modules[i].message_input_array[k].connection_type = sockets[l];
+						l++;
+					}
+				}
+			}
+		}
+		cout << "after join" << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_input> m_i = modules[i].get_all_message_input();
-
+			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+				if(it1->connection_type) {
+					cout << it1->channel_from << endl;
+				}
+			}
 		}
 		//QueueAndSockets *queueAndSockets = new QueueAndSockets;
 		//queueAndSockets->run(my_modules);
 		//delete(queueAndSockets);
-
+//*/
 	} else {
 		cerr << "Wrong number of arguments. Input the number of your machine.";
 		return 1;
@@ -230,26 +276,29 @@ int create_sock_for_receiving(int port, string ip_address) {
 	return sock;
 }
 
+int socket_for_receiving = 0;
 void* create_sockets_for_receiving(void *arg) {
-	vector<Module> *modules_address = (vector<Module> *) arg;
-	vector<Module> modules = *modules_address;
-	vector<Module::message_input> m_i;
-	int socket_for_receiving;
-	for(int i = 0; i < modules.size(); i++) {
-		if(modules[i].get_port()) {
-		socket_for_receiving = create_sock_for_receiving(modules[i].get_port(),modules[i].get_my_ip_address() );
-		}
-		m_i = modules[i].get_all_message_input();
-		for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-			if(it1->connection_type) { // type = socket
-				it1->channel_from = accept(socket_for_receiving, NULL, NULL);
-				if (it1->channel_from < 0) {
-					perror("accept");
-					cerr << modules[i].get_port() << endl;
-					exit(EXIT_FAILURE);
-				}
-				cout << modules[i].get_name() << " accepted " << it1->name_from << endl;
+	Module * vals = (Module *) arg;
+	int *s;
+	//int socket_for_receiving;
+	vector<int> sockets;
+	if(vals->get_port() != 0)
+		socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
+	for(int i = 0; vals->get_nti(); i++ ) {
+		if(vals->message_input_array[i].connection_type) { // type = socket
+			vals->message_input_array[i].channel_from = accept(socket_for_receiving, NULL, NULL);
+			cout << vals->message_input_array[i].channel_from << endl;
+			sockets.push_back(vals->message_input_array[i].channel_from);
+			if (vals->message_input_array[i].channel_from < 0) {
+				perror("accept");
+				cerr << vals->get_port() << endl;
+				exit(EXIT_FAILURE);
 			}
+			cout << vals->get_name() << " accepted " << vals->message_input_array[i].name_from << endl;
 		}
 	}
+	cout << vals->get_name() << "finished" << endl;
+	vector<int> * result = &sockets;
+	s = &socket_for_receiving;
+	return (void *) s;
 }

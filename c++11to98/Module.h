@@ -37,6 +37,9 @@ public:
 		string ip_address_to;
 	};
 
+	vector<message_input> message_input_array;
+	vector<message_output> message_output_array;
+
 	Module();
 	virtual ~Module();
 
@@ -108,8 +111,6 @@ private:
 	int port;
 	string my_ip_address;
 
-	vector<message_input> message_input_array;
-	vector<message_output> message_output_array;
 };
 
 #endif /* MODULE_H_ */
