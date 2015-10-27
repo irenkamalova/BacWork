@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser("/home/newuser/modules.txt");
+		vector<Module> modules = parser("/home/irisha/modules.txt");
 		 //modules for this machine
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 		*/
 		cout << "after join" << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
-			vector<Module::message_input> m_i = modules[i].get_all_message_input();
+			vector<Module::message_input> m_i = my_modules[i].get_all_message_input();
 			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 				if(it1->connection_type) {
 					cout << it1->channel_from << endl;
@@ -328,6 +328,7 @@ void* create_sockets_for_receiving(void *arg) {
 	int socket_for_receiving;
 	if(vals->get_port() != 0)
 		socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
+	int k = 0;
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 		if(it1->connection_type) { // type = socket
 			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
@@ -337,8 +338,10 @@ void* create_sockets_for_receiving(void *arg) {
 				cerr << vals->get_port() << endl;
 				exit(EXIT_FAILURE);
 			}
+			vals->message_input_array[k].channel_from = it1->channel_from;
 			cout << vals->get_name() << " accepted " << it1->name_from << endl;
 		}
+		k++;
 	}
 	//cout << vals->get_name() << "finished" << endl;
 	vector<int> * result = &sockets;
