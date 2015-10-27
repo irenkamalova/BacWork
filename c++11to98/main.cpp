@@ -17,6 +17,11 @@
 #define handle_error(msg) \
                do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
+typedef struct something_t {
+	int a;
+	int b;
+} VALUES;
+
 vector<Module> parser(string s);
 void check_parser(vector<Module> vals, string s);
 int create_socket(int port, string ip_address);
@@ -95,27 +100,30 @@ int main(int argc, char *argv[]) {
 
 
 		cout << "here" << endl;
-		vector< vector<int> > so(my_modules.size());
-		vector<int> sockets(20);
+		vector< vector<int> > so;
+		vector<int> sockets(2);
 		vector<int> * s = &sockets;
 		int thread_number = 0;
+		void *status = (void *) &thread_number;
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 					  ++it) {
-			pthread_join(*it, (void **) &s);
-			cout << "no mistake4" << endl;
-			sockets = *s;
-			cout << "no mistake5" << endl;
-			so.push_back(sockets);
-			cout << "no mistake6" << endl;
+			pthread_join(*it, &status);
+			cout << *(int *) status << endl;
+			//cout << "no mistake4" << endl;
+			//sockets = *s;
+			//cout << "no mistake5" << endl;
+			//so.push_back(sockets);
+			//cout << "no mistake6" << endl;
 		}
 		/*
 		int so_number = 0, l = 0;
 		for(int i = 0; i < my_modules.size(); i++) {
 			if(my_modules[i].get_port() != 0) {
-
+				vector<Module::message_input> m_i = my_modules[i].get_all_message_input();
 				for(int k = 0; k < my_modules[i].get_nti(); k++) {
+					l = 0;
 					if(my_modules[i].message_input_array[k].connection_type) {
-						my_modules[i].message_input_array[k].connection_type = so[so_number][l];
+						my_modules[i].message_input_array[k].channel_from = so[so_number][l];
 						l++;
 					}
 				}
@@ -332,6 +340,6 @@ void* create_sockets_for_receiving(void *arg) {
 	}
 	//cout << vals->get_name() << "finished" << endl;
 	vector<int> * result = &sockets;
-	//s = &socket_for_receiving;
-	return (void *) result;
+	s = &socket_for_receiving;
+	pthread_exit((void*)s);
 }
