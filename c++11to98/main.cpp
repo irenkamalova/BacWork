@@ -64,17 +64,13 @@ int main(int argc, char *argv[]) {
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
 			for (int k = 0; k < m_o.size(); k++) {
-				cout << my_modules[i].get_name() << " " << m_o[k].name;
-				cout << m_o[k].connection_type << " " << m_o[k].port_to << " " << m_o[k].ip_address_to << endl;
 				if (m_o[k].connection_type) {
 					m_o[k].channel_to = create_socket(m_o[k].port_to, m_o[k].ip_address_to);
-
-					//sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
 				}
 			}
 		}
+		
 		cout << "after connect " << endl;
-		sleep(10);
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 			 ++it) {
 			pthread_join(*it, (void **) NULL);
@@ -288,29 +284,30 @@ int create_sock_for_receiving(int port, string ip_address) {
 	return sock;
 }
 
-int socket_for_receiving = 0;
 void* create_sockets_for_receiving(void *arg) {
 	Module * vals = (Module *) arg;
 	int *s;
+
 	//int socket_for_receiving;
 	vector<int> sockets;
+	vector<Module::message_input> m_i = vals->get_all_message_input();
+	int socket_for_receiving;
 	if(vals->get_port() != 0)
 		socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
-	for(int i = 0; vals->get_nti(); i++ ) {
-		if(vals->message_input_array[i].connection_type) { // type = socket
-			vals->message_input_array[i].channel_from = accept(socket_for_receiving, NULL, NULL);
-			cout << vals->message_input_array[i].channel_from << endl;
-			sockets.push_back(vals->message_input_array[i].channel_from);
-			if (vals->message_input_array[i].channel_from < 0) {
+	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+		if(it1->connection_type) { // type = socket
+			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
+			sockets.push_back(it1->channel_from);
+			if (it1->channel_from < 0) {
 				perror("accept");
 				cerr << vals->get_port() << endl;
 				exit(EXIT_FAILURE);
 			}
-			cout << vals->get_name() << " accepted " << vals->message_input_array[i].name_from << endl;
+			cout << vals->get_name() << " accepted " << it1->name_from << endl;
 		}
 	}
 	//cout << vals->get_name() << "finished" << endl;
-	//vector<int> * result = &sockets;
+	vector<int> * result = &sockets;
 	//s = &socket_for_receiving;
-	//return (void *) s;
+	return (void *) result;
 }
