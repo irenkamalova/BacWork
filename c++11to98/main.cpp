@@ -102,12 +102,14 @@ int main(int argc, char *argv[]) {
 		cout << "here" << endl;
 		vector< vector<int> > so;
 		vector<int> sockets(2);
-		vector<int> * s = &sockets;
+		//vector<int> * s = &sockets;
 		int thread_number = 0;
+		void  * result = 0;
 		void *status = (void *) &thread_number;
+		void ** s = &status;
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 					  ++it) {
-			pthread_join(*it, &status);
+			pthread_join(*it, s);
 			cout << *(int *) status << endl;
 			//cout << "no mistake4" << endl;
 			//sockets = *s;
