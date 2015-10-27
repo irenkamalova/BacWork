@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser("/home/irisha/modules.txt");
+		vector<Module> modules = parser("/home/newuser/modules.txt");
 		 //modules for this machine
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
@@ -64,13 +64,22 @@ int main(int argc, char *argv[]) {
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
 			for (int k = 0; k < m_o.size(); k++) {
+				cout << my_modules[i].get_name() << " " << m_o[k].name;
+				cout << m_o[k].connection_type << " " << m_o[k].port_to << " " << m_o[k].ip_address_to << endl;
 				if (m_o[k].connection_type) {
 					m_o[k].channel_to = create_socket(m_o[k].port_to, m_o[k].ip_address_to);
+
 					//sockets_array[(*m_addrs[i]).get_number()][k] = (*m_o)[k].channel_to;
 				}
 			}
 		}
-		//int sockets[my_modules.size()];
+		cout << "after connect " << endl;
+		sleep(10);
+		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
+			 ++it) {
+			pthread_join(*it, (void **) NULL);
+		}
+		/*int sockets[my_modules.size()];
 		cout << "here" << endl;
 		vector<int> sockets(20);
 		vector<int> * s = &sockets;
@@ -78,8 +87,9 @@ int main(int argc, char *argv[]) {
 		int thread_number = 0;
 		for(int i = 0; i < my_modules.size(); i++) {
 			if(my_modules[i].get_port() != 0) {
-				pthread_join(threads[thread_number], &result);
+				pthread_join(threads[thread_number], (void **) NULL);
 				thread_number++;
+				/*
 				vector<int> * s = (vector<int> *) result;
 
 				int l = 0;
@@ -89,8 +99,10 @@ int main(int argc, char *argv[]) {
 						l++;
 					}
 				}
+
 			}
 		}
+		 */
 		cout << "after join" << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_input> m_i = modules[i].get_all_message_input();
@@ -297,8 +309,8 @@ void* create_sockets_for_receiving(void *arg) {
 			cout << vals->get_name() << " accepted " << vals->message_input_array[i].name_from << endl;
 		}
 	}
-	cout << vals->get_name() << "finished" << endl;
-	vector<int> * result = &sockets;
-	s = &socket_for_receiving;
-	return (void *) s;
+	//cout << vals->get_name() << "finished" << endl;
+	//vector<int> * result = &sockets;
+	//s = &socket_for_receiving;
+	//return (void *) s;
 }
