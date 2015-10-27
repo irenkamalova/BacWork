@@ -60,45 +60,69 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		sleep(2);
+		cout << "before connect " << endl;
+		for(int i = 0; i < my_modules.size(); i++) {
+			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
+			for (int k = 0; k < m_o.size(); k++) {
+				if (m_o[k].connection_type) {
+					cout << m_o[k].channel_to << endl;
+				}
+			}
+		}
 
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
 			for (int k = 0; k < m_o.size(); k++) {
 				if (m_o[k].connection_type) {
 					m_o[k].channel_to = create_socket(m_o[k].port_to, m_o[k].ip_address_to);
+					my_modules[i].message_output_array[k].channel_to = m_o[k].channel_to;
 				}
 			}
 		}
-		
 		cout << "after connect " << endl;
-		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
-			 ++it) {
-			pthread_join(*it, (void **) NULL);
+		for(int i = 0; i < my_modules.size(); i++) {
+			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
+			for (int k = 0; k < m_o.size(); k++) {
+				if (m_o[k].connection_type) {
+					cout << m_o[k].channel_to << endl;
+				}
+			}
 		}
-		/*int sockets[my_modules.size()];
+
+
+
+
+
+
 		cout << "here" << endl;
+		vector< vector<int> > so(my_modules.size());
 		vector<int> sockets(20);
 		vector<int> * s = &sockets;
-		void * result = 0;
 		int thread_number = 0;
+		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
+					  ++it) {
+			pthread_join(*it, (void **) &s);
+			cout << "no mistake4" << endl;
+			sockets = *s;
+			cout << "no mistake5" << endl;
+			so.push_back(sockets);
+			cout << "no mistake6" << endl;
+		}
+		/*
+		int so_number = 0, l = 0;
 		for(int i = 0; i < my_modules.size(); i++) {
 			if(my_modules[i].get_port() != 0) {
-				pthread_join(threads[thread_number], (void **) NULL);
-				thread_number++;
-				/*
-				vector<int> * s = (vector<int> *) result;
 
-				int l = 0;
 				for(int k = 0; k < my_modules[i].get_nti(); k++) {
 					if(my_modules[i].message_input_array[k].connection_type) {
-						my_modules[i].message_input_array[k].connection_type = sockets[l];
+						my_modules[i].message_input_array[k].connection_type = so[so_number][l];
 						l++;
 					}
 				}
-
+				so_number++;
 			}
 		}
-		 */
+		*/
 		cout << "after join" << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_input> m_i = modules[i].get_all_message_input();
