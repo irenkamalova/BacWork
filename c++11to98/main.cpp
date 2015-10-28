@@ -23,8 +23,12 @@ uint64_t timestamp() {
 
 uint64_t starttime;
 
+string str = "/home/newuser/messages_queue.txt";
+
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
+static const long long int SLEEP_TIME = 100000;
+long long int array_for_file[10][300];
 
 vector<Module> parser(string s);
 int create_socket(int port, string ip_address);
@@ -34,6 +38,8 @@ void* module(void * arg);
 vector<pair<int*, int*> > pairs(10);
 int datas[20][50];
 const int LENGTH_OF_ARRAY = 50;
+
+void write_into_file(Module * vals, ofstream *fout);
 
 void receive_message(int number_of_current_pair) {
 
@@ -177,8 +183,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		cout << "here" << endl;
-
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 					  ++it) {
 			pthread_join(*it, (void **) NULL);
@@ -200,11 +204,77 @@ int main(int argc, char *argv[]) {
 				handle_error("Error on thread create");
 			}
 		}
+		starttime = timestamp();
+		sender_queue *sq = new sender_queue;
+		long long int sleep_time = SLEEP_TIME;
+		int index = 0;
+		int propusk = 0;
+		//starttime = timestamp();
+		long long int t_i = (long long int) starttime;
+		if((long long int)(timestamp() - starttime) < 0) {
+			cout << "starttime error " << endl;
+			exit(EXIT_FAILURE);
+		}
+		while((long long int)(timestamp() - starttime) < TIME_SS) {
+			if((long long int)(timestamp() - starttime) < 0) {
+				cout << "Error 187 " << endl;
+				exit(EXIT_FAILURE);
+			}
 
+			int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
+			for(int i = 0; i < numeric_of_pair_for_output; i++) {
+				sq->send_message(0);
+				//array_for_file[11][index++] = 1;
+				//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+			}
+			t_i = t_i + sleep_time * 1000;
+			while( (t_i - (long long int)timestamp()) < 0 ) {
+				t_i = t_i + sleep_time * 1000;
+				propusk++;
+			}
+			//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
+			if(t_i - (long long int)timestamp() < 0) {
+				cout << "Error 205" << endl;
+				exit(EXIT_FAILURE);
+			}
+			int for_usleep = (t_i - (long long int)timestamp()) / 1000;
+			usleep( for_usleep );
+		}
+		cout << "AFTER SS END WORK" << endl;
 		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
 			 ++it) {
 			pthread_join(*it, (void **) NULL);
 		}
+		cout << "here" << endl;
+
+
+		//char * cstr = new char [str.length()+1];
+		//cout << "here2" << endl;
+		//strcpy (cstr, str.c_str());
+		//ofstream fout(cstr);
+		for(int i = 0; i < my_modules.size(); i++) {
+			int k = 0;
+			int count_send = 0;
+			int count_rec = 0;
+			while(array_for_file[my_modules[i].get_number()][k] != 0) {
+				if(array_for_file[my_modules[i].get_number()][k] == 1) {
+					k++;
+					count_send++;
+				}
+				else if(array_for_file[my_modules[i].get_number()][k] == 2) {
+					k++;
+					count_rec++;
+				}
+			}
+
+			if(count_rec != 0)
+				cout << my_modules[i].get_name() << " получил сообщений " << count_rec
+				<< " цепочек " << count_rec / my_modules[i].get_nti() << endl;
+			if(count_send != 0)
+				cout << my_modules[i].get_name() << " отправил сообщений " << count_send
+				<< " цепочек " << count_send / my_modules[i].get_nto() << endl;
+		}
+		//fout.close();
 		cout << "finished" << endl;
 		//QueueAndSockets *queueAndSockets = new QueueAndSockets;
 		//queueAndSockets->run(my_modules);
@@ -252,7 +322,7 @@ void * module (void * arg) {
 			while (recv_object->there_message(it->channel_from)) {
 
 				//receiving
-				//array_for_file[vals->get_number()][index] = 2; //bad
+				array_for_file[vals->get_number()][index] = 2; //bad
 				//cout << index << endl;
 				index++;
 				for (int l = 0; l < it->time_hand; l++) {
@@ -289,7 +359,7 @@ void * module (void * arg) {
 								send_object = new sender_socket;
 							}
 							send_object->send_message(m_o[k].channel_to);
-							//array_for_file[vals->get_number()][index] = 1;
+							array_for_file[vals->get_number()][index] = 1;
 							//cout << index << endl;
 							index++;
 							delete (send_object);
@@ -309,7 +379,6 @@ void * module (void * arg) {
 	}
 	cout << vals->get_name() << " finished " << endl;
 }
-
 
 vector<Module> parser(string s) {
 	char * cstr = new char [s.length()+1];
@@ -492,4 +561,27 @@ void* create_sockets_for_receiving(void *arg) {
 		}
 		k++;
 	}
+}
+
+void write_into_file(Module * vals, ofstream * fout) {
+	int k = 0;
+	int count_send = 0;
+	int count_rec = 0;
+	while(array_for_file[vals->get_number()][k] != 0) {
+		if(array_for_file[vals->get_number()][k] == 1) {
+			k++;
+			count_send++;
+		}
+		else if(array_for_file[vals->get_number()][k] == 2) {
+			k++;
+			count_rec++;
+		}
+	}
+
+	if(count_rec != 0)
+		*fout << vals->get_name() << " получил сообщений " << count_rec
+		<< " цепочек " << count_rec / vals->get_nti() << endl;
+	if(count_send != 0)
+		*fout << vals->get_name() << " отправил сообщений " << count_send
+		<< " цепочек " << count_send / vals->get_nto() << endl;
 }
