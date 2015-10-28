@@ -27,8 +27,8 @@ string str = "/home/newuser/messages_queue.txt";
 string s = "/home/newuser/modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 100000;
-long long int array_for_file[10][400];
+static const long long int SLEEP_TIME = 500;
+long long int array_for_file[10][80000];
 
 vector<Module> parser();
 int create_socket(int *port, string *ip_address);
@@ -206,8 +206,7 @@ int main(int argc, char *argv[]) {
 		}
 		starttime = timestamp();
 		sender_queue *sq = new sender_queue;
-		long long int sleep_time = SLEEP_TIME;
-		int index = 0;
+		int count_messages_ss = 0;
 		int propusk = 0;
 		//starttime = timestamp();
 		long long int t_i = (long long int) starttime;
@@ -224,12 +223,13 @@ int main(int argc, char *argv[]) {
 			int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 			for(int i = 0; i < numeric_of_pair_for_output; i++) {
 				sq->send_message(0);
+				count_messages_ss++;
 				//array_for_file[11][index++] = 1;
 				//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
 			}
-			t_i = t_i + sleep_time * 1000;
+			t_i = t_i + SLEEP_TIME * 1000;
 			while( (t_i - (long long int)timestamp()) < 0 ) {
-				t_i = t_i + sleep_time * 1000;
+				t_i = t_i + SLEEP_TIME * 1000;
 				propusk++;
 			}
 			//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
@@ -252,6 +252,8 @@ int main(int argc, char *argv[]) {
 		//cout << "here2" << endl;
 		//strcpy (cstr, str.c_str());
 		//ofstream fout(cstr);
+		cout << count_messages_ss << endl;
+		cout << propusk << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			int k = 0;
 			int count_send = 0;
@@ -516,7 +518,7 @@ int create_socket(int *port, string *ip_address) {
 	const char *cstr = (*ip_address).c_str();
 	addr.sin_addr.s_addr = inet_addr(cstr);
 	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		cerr << port << endl;
+		cerr << *port << endl;
 		handle_error("In function create_socket - connect:");
 
 	}
@@ -535,7 +537,7 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 	const char *cstr = (*ip_address).c_str();
 	addr.sin_addr.s_addr = inet_addr(cstr);
 	if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		cerr << port << endl;
+		cerr << *port << endl;
 		handle_error("Bind error:");
 	}
 	listen(sock, 50);

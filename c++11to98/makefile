@@ -2,7 +2,7 @@ CFLAGS=-std=c++98
 LDFLAGS=-pthread 
 PFLAGS=-Wl,--no-as-needed
 
-SOURCES=main.cpp Module.cpp QueueAndSockets.cpp
+SOURCES=main.cpp Module.cpp
 
 OBJECTS=$(SOURCES: %.cpp=%.o)
 EXECUTABLE=simulator
