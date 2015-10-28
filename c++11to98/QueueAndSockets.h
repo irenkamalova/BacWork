@@ -21,7 +21,7 @@ public:
 private:
     static const int LENGTH_OF_ARRAY = 50;
     static const long long int TIME_SS = 10000000000; // 10 seconds
-    static const long long int TIME = 15000000000; // 15 seconds
+    static const long long int TIME = 10000000000; // 15 seconds
     static const long long int SLEEP_TIME = 100000;
     long long int array_for_file[203][200000];
     vector<Module> modules;

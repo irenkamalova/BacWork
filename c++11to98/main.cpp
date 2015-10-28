@@ -14,10 +14,105 @@
 #define handle_error(msg) \
                do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
+uint64_t timestamp() {
+	timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return (static_cast<uint64_t>(ts.tv_sec) * 10000000u
+			+ static_cast<uint64_t>(ts.tv_nsec) / 100u) * 100u;
+}
+
+uint64_t starttime;
+
+static const long long int TIME_SS = 10000000000; // 10 seconds
+static const long long int TIME = 10000000000;
+
 vector<Module> parser(string s);
 int create_socket(int port, string ip_address);
 int create_sock_for_receiving(int port, string ip_address);
 void* create_sockets_for_receiving(void *arg);
+void* module(void * arg);
+vector<pair<int*, int*> > pairs(10);
+int datas[20][50];
+const int LENGTH_OF_ARRAY = 50;
+
+void receive_message(int number_of_current_pair) {
+
+	if(pairs[number_of_current_pair].second != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
+		pairs[number_of_current_pair].second = pairs[number_of_current_pair].second + 1;
+	}
+	else
+		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
+}
+struct receiver {
+	virtual bool wait_for_message(int number_of_current_pair_in) = 0;
+	virtual bool there_message(int number_of_current_pair_in) = 0;
+	virtual void check() = 0;
+};
+
+struct receiver_queue : receiver {
+	bool wait_for_message(int number_of_current_pair_in) {
+		return pairs[number_of_current_pair_in].first == pairs[number_of_current_pair_in].second ? true : false;
+	}
+	bool there_message(int number_of_current_pair_in) {
+		if(pairs[number_of_current_pair_in].first != pairs[number_of_current_pair_in].second) {
+			receive_message(number_of_current_pair_in);
+			return true;
+		} else return false;
+	}
+	void check() {
+		cout << "queue" << endl;
+	}
+
+};
+
+struct receiver_socket : receiver {
+	int checkout;
+	bool wait_for_message(int socket) {
+		int result = 0;
+		int r = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
+		checkout = r;
+		return (r < 0) ? true : false;
+	}
+	bool there_message(int socket) {
+		int result = 0;
+		if(checkout > 0) {
+			checkout = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
+			return true;
+		}
+		else
+			return false;
+	}
+	void check() {
+		cout << "socket" << endl;
+	}
+};
+
+struct sender {
+	virtual void send_message(int number_of_channel) = 0;
+};
+
+struct sender_queue : sender {
+	void send_message(int number_of_current_pair) {
+		if(pairs[number_of_current_pair].first != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
+			pairs[number_of_current_pair].first = pairs[number_of_current_pair].first + 1;
+		}
+		else
+			pairs[number_of_current_pair].first = &datas[number_of_current_pair][0];
+	}
+};
+
+struct sender_socket : sender {
+	void send_message(int number_of_socket) {
+		int result = 0;
+		if (send(number_of_socket, &result, sizeof(int), 0) < 0) {
+			//int err = errno;
+			perror("sending");
+			//if(err != ECONNRESET)
+			exit(EXIT_FAILURE);
+
+		}
+	}
+};
 
 int main(int argc, char *argv[]) {
 	const char* both_way = "queue_and_socket";
@@ -97,6 +192,20 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
+
+		vector<pthread_t> thids;
+		for(int i = 0; i < my_modules.size(); i++) {
+			thids.push_back(thread);
+			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
+				handle_error("Error on thread create");
+			}
+		}
+
+		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
+			 ++it) {
+			pthread_join(*it, (void **) NULL);
+		}
+		cout << "finished" << endl;
 		//QueueAndSockets *queueAndSockets = new QueueAndSockets;
 		//queueAndSockets->run(my_modules);
 		//delete(queueAndSockets);
@@ -107,6 +216,100 @@ int main(int argc, char *argv[]) {
 	}
 	return 0;
 }
+
+void * module (void * arg) {
+	Module * vals = (Module *) arg;
+	int number_of_current_pair_in;
+	int number_of_current_pair_out;
+	double counter = 0.5;
+	double current = vals->get_data_amount();
+	short messages = 1;
+	int index = 0;
+	string name = vals->get_name();
+	vector<Module::message_input> m_i = vals->get_all_message_input();
+	vector<Module::message_output> m_o = vals->get_all_message_output();
+
+	receiver *recv_object;
+	sender *send_object;
+	//cout << (long long int)(timestamp() - starttime) << endl;
+	while((long long int)(timestamp() - starttime) < TIME) {
+
+
+		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
+
+			if (!it->connection_type)
+				recv_object = new receiver_queue;
+			else
+				recv_object = new receiver_socket;
+			//check if there any message. If no, switch thread
+			while (recv_object->wait_for_message(it->channel_from)) {
+				if((long long int)(timestamp() - starttime) < TIME) {
+					if(!vals->get_affectation()) //if there no affectation
+						usleep(0);
+				}
+				else break;
+			}
+			while (recv_object->there_message(it->channel_from)) {
+
+				//receiving
+				//array_for_file[vals->get_number()][index] = 2; //bad
+				//cout << index << endl;
+				index++;
+				for (int l = 0; l < it->time_hand; l++) {
+					long long int result = 1;
+					for (int k = 1; k <= 250; k++) {
+						result = result * k;
+					}
+				}
+				//cout << vals->get_name() << " received from " << it->name_from << endl;
+				//sending
+				if (it->parameter) {
+					if(vals->get_data_amount() != 1) {
+						if (current < counter) {
+							messages = 0;
+						}
+						else {
+							messages = 1;
+							counter += 1.0;
+						}
+						current += vals->get_data_amount();
+					}
+					for(int m = 0; m < messages; m++) {
+						for (int k = 0; k < m_o.size(); k++) {
+							for (int l = 0; l < m_o[k].time_form; l++) {
+								long long int result = 1;
+								for (int n = 1; n <= 250; n++) {
+									result = result * n;
+								}
+							}
+							if (!m_o[k].connection_type) { // type = queue
+								send_object = new sender_queue;
+							}
+							else { // type = socket
+								send_object = new sender_socket;
+							}
+							send_object->send_message(m_o[k].channel_to);
+							//array_for_file[vals->get_number()][index] = 1;
+							//cout << index << endl;
+							index++;
+							delete (send_object);
+							//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
+						}
+					}
+				}
+			}
+			delete(recv_object);
+		}
+	}
+	//close sockets for receiving
+	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+		if (it1->connection_type) {
+			close(it1->channel_from);
+		}
+	}
+	cout << vals->get_name() << " finished " << endl;
+}
+
 
 vector<Module> parser(string s) {
 	char * cstr = new char [s.length()+1];

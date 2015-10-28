@@ -257,25 +257,6 @@ void QueueAndSockets::module(Module *vals) {
     string name = vals->get_name();
     vector<Module::message_input> m_i = vals->get_all_message_input();
     vector<Module::message_output> m_o = vals->get_all_message_output();
-    //sockets for receiving
-
-    int socket_for_receiving;
-    if(vals->get_port() != 0)
-        socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
-    for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-        if(it1->connection_type) { // type = socket
-            it1->channel_from = accept(socket_for_receiving, NULL, NULL);
-            if (it1->channel_from < 0) {
-                perror("accept");
-                cerr << vals->get_port() << endl;
-                exit(EXIT_FAILURE);
-            }
-            cout << vals->get_name() << " accepted " << it1->name_from << endl;
-        }
-    }
-
-
-    sleep(5);
 
     receiver *recv_object;
     sender *send_object;
