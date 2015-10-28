@@ -24,15 +24,15 @@ uint64_t timestamp() {
 uint64_t starttime;
 
 string str = "/home/newuser/messages_queue.txt";
-
+string s = "/home/newuser/modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 100000;
-long long int array_for_file[10][300];
+long long int array_for_file[10][400];
 
-vector<Module> parser(string s);
-int create_socket(int port, string ip_address);
-int create_sock_for_receiving(int port, string ip_address);
+vector<Module> parser();
+int create_socket(int *port, string *ip_address);
+int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
 vector<pair<int*, int*> > pairs(10);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser("/home/newuser/modules.txt");
+		vector<Module> modules = parser();
 		 //modules for this machine
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
 			for (int k = 0; k < m_o.size(); k++) {
 				if (m_o[k].connection_type) {
-					m_o[k].channel_to = create_socket(m_o[k].port_to, m_o[k].ip_address_to);
+					m_o[k].channel_to = create_socket(&m_o[k].port_to, &m_o[k].ip_address_to);
 					my_modules[i].message_output_array[k].channel_to = m_o[k].channel_to;
 				}
 			}
@@ -380,7 +380,7 @@ void * module (void * arg) {
 	cout << vals->get_name() << " finished " << endl;
 }
 
-vector<Module> parser(string s) {
+vector<Module> parser() {
 	char * cstr = new char [s.length()+1];
 	strcpy(cstr, s.c_str());
 	ifstream fin(cstr);
@@ -504,7 +504,7 @@ vector<Module> parser(string s) {
 	return vals;
 }
 
-int create_socket(int port, string ip_address) {
+int create_socket(int *port, string *ip_address) {
 	int sock;
 	struct sockaddr_in addr;
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -512,8 +512,8 @@ int create_socket(int port, string ip_address) {
 		handle_error("In function create_socket - socket:");
 	}
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	const char *cstr = ip_address.c_str();
+	addr.sin_port = htons(*port);
+	const char *cstr = (*ip_address).c_str();
 	addr.sin_addr.s_addr = inet_addr(cstr);
 	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 		cerr << port << endl;
@@ -523,7 +523,7 @@ int create_socket(int port, string ip_address) {
 	return sock;
 }
 
-int create_sock_for_receiving(int port, string ip_address) {
+int create_sock_for_receiving(int *port, string *ip_address) {
 	int sock;
 	struct sockaddr_in addr;
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -531,8 +531,8 @@ int create_sock_for_receiving(int port, string ip_address) {
 		handle_error("Socket create:");
 	}
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	const char *cstr = ip_address.c_str();
+	addr.sin_port = htons(*port);
+	const char *cstr = (*ip_address).c_str();
 	addr.sin_addr.s_addr = inet_addr(cstr);
 	if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 		cerr << port << endl;
@@ -546,8 +546,11 @@ void* create_sockets_for_receiving(void *arg) {
 	Module * vals = (Module *) arg;
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	int socket_for_receiving;
-	if(vals->get_port() != 0)
-		socket_for_receiving = create_sock_for_receiving(vals->get_port(), vals->get_my_ip_address());
+	if(vals->get_port() != 0) {
+		int port = vals->get_port();
+		string address = vals->get_my_ip_address();
+		socket_for_receiving = create_sock_for_receiving(&port, &address);
+	}
 	int k = 0;
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 		if(it1->connection_type) { // type = socket
