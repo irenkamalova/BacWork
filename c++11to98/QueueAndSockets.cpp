@@ -146,7 +146,6 @@ void QueueAndSockets::run(vector<Module> m) {
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-
     cpu_set_t cpus;
     int cpu_id = 0;
 

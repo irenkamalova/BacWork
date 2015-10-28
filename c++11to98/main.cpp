@@ -23,8 +23,8 @@ uint64_t timestamp() {
 
 uint64_t starttime;
 
-string str = "/home/newuser/messages_queue.txt";
-string s = "/home/newuser/modules.txt";
+string str = "/home/irisha/messages_queue.txt";
+string s = "/home/irisha/modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 500;
@@ -120,6 +120,50 @@ struct sender_socket : sender {
 	}
 };
 
+void * ss_module(void * arg) {
+	//starttime = timestamp();
+	sender_queue *sq = new sender_queue;
+	int count_messages_ss = 0;
+	int propusk = 0;
+	starttime = timestamp();
+	long long int t_i = (long long int) starttime;
+	//if((long long int)(timestamp() - starttime) < 0) {
+	//	cout << "starttime error " << endl;
+	//	exit(EXIT_FAILURE);
+	//}
+	while((long long int)(timestamp() - starttime) < TIME_SS) {
+		if((long long int)(timestamp() - starttime) < 0) {
+			cout << "Error 187 " << endl;
+			exit(EXIT_FAILURE);
+		}
+
+		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
+		for(int i = 0; i < numeric_of_pair_for_output; i++) {
+			sq->send_message(0);
+			count_messages_ss++;
+			//array_for_file[11][index++] = 1;
+			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
+		}
+		t_i = t_i + SLEEP_TIME * 1000;
+		while( (t_i - (long long int)timestamp()) < 0 ) {
+			t_i = t_i + SLEEP_TIME * 1000;
+			propusk++;
+		}
+		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
+		//if(t_i - (long long int)timestamp() < 0) {
+		//	cout << "Error 205" << endl;
+		//	exit(EXIT_FAILURE);
+		//}
+		int for_usleep = (t_i - (long long int)timestamp()) / 1000;
+		usleep( for_usleep );
+	}
+	cout << "AFTER SS END WORK" << endl;
+
+	cout << count_messages_ss << endl;
+	cout << propusk << endl;
+}
+
+
 int main(int argc, char *argv[]) {
 	const char* both_way = "queue_and_socket";
 	
@@ -204,56 +248,29 @@ int main(int argc, char *argv[]) {
 				handle_error("Error on thread create");
 			}
 		}
-		starttime = timestamp();
-		sender_queue *sq = new sender_queue;
-		int count_messages_ss = 0;
-		int propusk = 0;
-		//starttime = timestamp();
-		long long int t_i = (long long int) starttime;
-		if((long long int)(timestamp() - starttime) < 0) {
-			cout << "starttime error " << endl;
-			exit(EXIT_FAILURE);
-		}
-		while((long long int)(timestamp() - starttime) < TIME_SS) {
-			if((long long int)(timestamp() - starttime) < 0) {
-				cout << "Error 187 " << endl;
-				exit(EXIT_FAILURE);
-			}
 
-			int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
-			for(int i = 0; i < numeric_of_pair_for_output; i++) {
-				sq->send_message(0);
-				count_messages_ss++;
-				//array_for_file[11][index++] = 1;
-				//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
-			}
-			t_i = t_i + SLEEP_TIME * 1000;
-			while( (t_i - (long long int)timestamp()) < 0 ) {
-				t_i = t_i + SLEEP_TIME * 1000;
-				propusk++;
-			}
-			//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
-			if(t_i - (long long int)timestamp() < 0) {
-				cout << "Error 205" << endl;
-				exit(EXIT_FAILURE);
-			}
-			int for_usleep = (t_i - (long long int)timestamp()) / 1000;
-			usleep( for_usleep );
+		pthread_t ss_thread;
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		cpu_set_t cpus;
+		int cpu_id = 1;
+
+		CPU_ZERO(&cpus);
+        for (int j = 0; j < 2; j++)
+            CPU_SET(j, &cpus);
+
+        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
+			handle_error("Error on ss_thread create");
 		}
-		cout << "AFTER SS END WORK" << endl;
+        pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
+        pthread_join(ss_thread, (void **) NULL);
+
 		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
 			 ++it) {
 			pthread_join(*it, (void **) NULL);
 		}
-		cout << "here" << endl;
-
-
-		//char * cstr = new char [str.length()+1];
-		//cout << "here2" << endl;
-		//strcpy (cstr, str.c_str());
-		//ofstream fout(cstr);
-		cout << count_messages_ss << endl;
-		cout << propusk << endl;
+		cout << "after join" << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			int k = 0;
 			int count_send = 0;
