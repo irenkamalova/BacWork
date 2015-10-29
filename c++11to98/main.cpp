@@ -133,10 +133,10 @@ void * ss_module(void * arg) {
 		t_i = t_i + SLEEP_TIME * 1000;
 		while( (t_i < (long long int)timestamp())  ) {
 			t_i = t_i + SLEEP_TIME * 1000;
-			for(int i = 0; i < numeric_of_pair_for_output; i++) {
+/*			for(int i = 0; i < numeric_of_pair_for_output; i++) {
 			    sq->send_message(0);
 			    count_messages_ss++;
-		    }
+		    }*/
 			propusk++;
 		}
 
