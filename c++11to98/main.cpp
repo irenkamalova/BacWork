@@ -27,7 +27,7 @@ string str = "messages_result.txt";
 string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 500;
+static const long long int SLEEP_TIME = 500000;
 long long int array_for_file[10][80000];
 
 vector<Module> parser();
@@ -130,16 +130,17 @@ void * ss_module(void * arg) {
 			sq->send_message(0);
 			count_messages_ss++;
 		}
-		t_i = t_i + SLEEP_TIME * 1000;
+		t_i = t_i + SLEEP_TIME;
+/*
 		while( (t_i < (long long int)timestamp())  ) {
-			t_i = t_i + SLEEP_TIME * 1000;
-/*			for(int i = 0; i < numeric_of_pair_for_output; i++) {
+			t_i = t_i + SLEEP_TIME;
+			for(int i = 0; i < numeric_of_pair_for_output; i++) {
 			    sq->send_message(0);
 			    count_messages_ss++;
-		    }*/
+		    }
 			propusk++;
 		}
-
+*/
 		//long long int for_usleep = (t_i - (long long int)timestamp()) / 1000;
 		//uint64_t now_plus = timestamp() + for_usleep;
 		while(  (t_i  > (long long int)timestamp() ) ) {
