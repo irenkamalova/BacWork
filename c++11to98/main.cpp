@@ -23,8 +23,8 @@ uint64_t timestamp() {
 
 uint64_t starttime;
 
-string str = "/home/irisha/messages_queue.txt";
-string s = "/home/irisha/modules.txt";
+string str = "messages_result.txt";
+string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 500;
@@ -111,11 +111,7 @@ struct sender_socket : sender {
 	void send_message(int number_of_socket) {
 		int result = 0;
 		if (send(number_of_socket, &result, sizeof(int), 0) < 0) {
-			//int err = errno;
-			perror("sending");
-			//if(err != ECONNRESET)
-			exit(EXIT_FAILURE);
-
+            handle_error("Error on send");
 		}
 	}
 };
@@ -125,37 +121,26 @@ void * ss_module(void * arg) {
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int propusk = 0;
-	starttime = timestamp();
 	long long int t_i = (long long int) starttime;
-	//if((long long int)(timestamp() - starttime) < 0) {
-	//	cout << "starttime error " << endl;
-	//	exit(EXIT_FAILURE);
-	//}
+
 	while((long long int)(timestamp() - starttime) < TIME_SS) {
-		if((long long int)(timestamp() - starttime) < 0) {
-			cout << "Error 187 " << endl;
-			exit(EXIT_FAILURE);
-		}
 
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
 			sq->send_message(0);
 			count_messages_ss++;
-			//array_for_file[11][index++] = 1;
-			//array_for_file[vals->get_index_for_file()][index++] = (long long int)(timestamp() - starttime);
 		}
 		t_i = t_i + SLEEP_TIME * 1000;
-		while( (t_i - (long long int)timestamp()) < 0 ) {
+		while( (t_i < (long long int)timestamp())  ) {
 			t_i = t_i + SLEEP_TIME * 1000;
 			propusk++;
 		}
-		//cout << (t_i - (long long int)timestamp()) / 1000 << endl;
-		//if(t_i - (long long int)timestamp() < 0) {
-		//	cout << "Error 205" << endl;
-		//	exit(EXIT_FAILURE);
-		//}
-		int for_usleep = (t_i - (long long int)timestamp()) / 1000;
-		usleep( for_usleep );
+
+		//long long int for_usleep = (t_i - (long long int)timestamp()) / 1000;
+		//uint64_t now_plus = timestamp() + for_usleep;
+		while(  (t_i  > (long long int)timestamp() ) ) {
+		    //usleep(0);
+		}
 	}
 	cout << "AFTER SS END WORK" << endl;
 
@@ -240,26 +225,31 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-
+        
+        //initialisation
+ 		pthread_t ss_thread;
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		cpu_set_t cpus;
+		int cpu_id = 0;		
+        
 		vector<pthread_t> thids;
+		starttime = timestamp();
 		for(int i = 0; i < my_modules.size(); i++) {
 			thids.push_back(thread);
 			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
 				handle_error("Error on thread create");
 			}
 		}
+        
 
-		pthread_t ss_thread;
-		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-		cpu_set_t cpus;
-		int cpu_id = 1;
 
 		CPU_ZERO(&cpus);
-        for (int j = 0; j < 2; j++)
-            CPU_SET(j, &cpus);
+        //for (int j = 0; j < 2; j++)
+            CPU_SET(0, &cpus); 
 
-        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        //pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        
 		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
 			handle_error("Error on ss_thread create");
 		}
