@@ -133,6 +133,10 @@ void * ss_module(void * arg) {
 		t_i = t_i + SLEEP_TIME * 1000;
 		while( (t_i < (long long int)timestamp())  ) {
 			t_i = t_i + SLEEP_TIME * 1000;
+			for(int i = 0; i < numeric_of_pair_for_output; i++) {
+			    sq->send_message(0);
+			    count_messages_ss++;
+		    }
 			propusk++;
 		}
 
@@ -232,6 +236,9 @@ int main(int argc, char *argv[]) {
 		pthread_attr_init(&attr);
 		cpu_set_t cpus;
 		int cpu_id = 0;		
+		int newprio = 100;
+        sched_param param; 
+              
         
 		vector<pthread_t> thids;
 		starttime = timestamp();
@@ -246,9 +253,11 @@ int main(int argc, char *argv[]) {
 
 		CPU_ZERO(&cpus);
         //for (int j = 0; j < 2; j++)
-            CPU_SET(0, &cpus); 
+            CPU_SET(0, &cpus);
+            param.sched_priority = newprio;  
 
-        //pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        pthread_attr_setschedparam (&attr, &param);
         
 		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
 			handle_error("Error on ss_thread create");
@@ -297,6 +306,7 @@ int main(int argc, char *argv[]) {
 }
 
 void * module (void * arg) {
+    //uint64_t delay = timestamp() - starttime;
 	Module * vals = (Module *) arg;
 	int number_of_current_pair_in;
 	int number_of_current_pair_out;
@@ -307,11 +317,11 @@ void * module (void * arg) {
 	string name = vals->get_name();
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	vector<Module::message_output> m_o = vals->get_all_message_output();
-
+    uint64_t delay = timestamp() - starttime;
 	receiver *recv_object;
 	sender *send_object;
 	//cout << (long long int)(timestamp() - starttime) << endl;
-	while((long long int)(timestamp() - starttime) < TIME) {
+	while((long long int)(timestamp() - starttime - delay) < TIME) {
 
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
