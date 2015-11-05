@@ -27,8 +27,9 @@ string str = "messages_result.txt";
 string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 500000;
+static const long long int SLEEP_TIME = 1000000;
 long long int array_for_file[10][80000];
+int array_of_max_queue[10];
 
 vector<Module> parser();
 int create_socket(int *port, string *ip_address);
@@ -264,6 +265,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 		cout << "after join" << endl;
+
 		for(int i = 0; i < my_modules.size(); i++) {
 			int k = 0;
 			int count_send = 0;
@@ -285,7 +287,10 @@ int main(int argc, char *argv[]) {
 			if(count_send != 0)
 				cout << my_modules[i].get_name() << " отправил сообщений " << count_send
 				<< " цепочек " << count_send / my_modules[i].get_nto() << endl;
+			cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;
 		}
+
+
 		//fout.close();
 		cout << "finished" << endl;
 		//QueueAndSockets *queueAndSockets = new QueueAndSockets;
@@ -308,13 +313,15 @@ void * module (void * arg) {
 	double current = vals->get_data_amount();
 	short messages = 1;
 	int index = 0;
+	int max_long_of_messages_queue = 0;
+	int long_of_messages_queue = 0;
 	string name = vals->get_name();
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	vector<Module::message_output> m_o = vals->get_all_message_output();
-    uint64_t delay = timestamp() - starttime;
+
 	receiver *recv_object;
 	sender *send_object;
-	//cout << (long long int)(timestamp() - starttime) << endl;
+	uint64_t delay = timestamp() - starttime;
 	while((long long int)(timestamp() - starttime - delay) < TIME) {
 
 
@@ -332,7 +339,11 @@ void * module (void * arg) {
 				}
 				else break;
 			}
+			long_of_messages_queue = 0;
 			while (recv_object->there_message(it->channel_from)) {
+				long_of_messages_queue++;
+				if(max_long_of_messages_queue < long_of_messages_queue)
+					max_long_of_messages_queue = long_of_messages_queue;
 
 				//receiving
 				array_for_file[vals->get_number()][index] = 2; //bad
@@ -390,7 +401,8 @@ void * module (void * arg) {
 			close(it1->channel_from);
 		}
 	}
-	cout << vals->get_name() << " finished " << endl;
+	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
+	//cout << vals->get_name() << " finished " << endl;
 }
 
 vector<Module> parser() {
