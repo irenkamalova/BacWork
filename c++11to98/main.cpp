@@ -28,16 +28,16 @@ string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 1000000;
-long long int array_for_file[10][80000];
-int array_of_max_queue[10];
+long long int array_for_file[20][80000];
+int array_of_max_queue[20];
 
 vector<Module> parser();
 int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
-vector<pair<int*, int*> > pairs(10);
-int datas[20][50];
+vector<pair<int*, int*> > pairs(20);
+int datas[40][50];
 const int LENGTH_OF_ARRAY = 50;
 
 void write_into_file(Module * vals, ofstream *fout);
@@ -284,19 +284,28 @@ int main(int argc, char *argv[]) {
 					count_rec++;
 				}
 			}
-            if(my_modules[i].get_name() != "РЕГ") {
-		        if(count_rec != 0)
-			        cout << my_modules[i].get_name() << " получил сообщений " << count_rec
-			        << " цепочек " << count_rec / my_modules[i].get_nti() << endl;
-		        if(count_send != 0)
-			        cout << my_modules[i].get_name() << " отправил сообщений " << count_send
-			        << " цепочек " << count_send / my_modules[i].get_nto() << endl;
-		        cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;
+            if(my_modules[i].get_number() < 8) {
+		        if(count_rec != 0) {
+			            cout << my_modules[i].get_name() << " получил сообщений " << count_rec
+			            << " цепочек " << count_rec / my_modules[i].get_nti() << endl;
+		            if(count_send != 0)
+			            cout << my_modules[i].get_name() << " отправил сообщений " << count_send
+			            << " цепочек " << count_send / my_modules[i].get_nto() << endl;
+		            cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;
+		       }
 		   }
 		   else {
-                cout << my_modules[i].get_name() << " отправил сообщений " << count_rec
-                << " цепочек " << count_rec / 2 << endl;		   
-		   }     
+		       if(my_modules[i].get_name() == "РЕГ")  {
+                    cout << my_modules[i].get_name() << " получил сообщений " << count_rec
+                    << " цепочек " << count_rec / 2 << endl;	
+                    cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;	
+                }
+                else  {
+                        cout << my_modules[i].get_name() << " получил сообщений " << count_rec
+                    << " цепочек " << count_rec << endl;     
+                    cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;        
+		        }
+		    }
 		}
 
 
