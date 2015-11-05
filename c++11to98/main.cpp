@@ -407,8 +407,8 @@ void * module (void * arg) {
 			close(it1->channel_from);
 		}
 	}
-	delete (send_object_q);
-	delete (send_object_s);
+	delete(send_object_q);
+	delete(send_object_s);
 	delete(recv_object_q);
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
