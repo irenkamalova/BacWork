@@ -41,7 +41,7 @@ const int LENGTH_OF_ARRAY = 50;
 
 void write_into_file(Module * vals, ofstream *fout);
 
-void receive_message(int number_of_current_pair) {
+void receive_message(int& number_of_current_pair) {
 
 	if(pairs[number_of_current_pair].second != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
 		pairs[number_of_current_pair].second = pairs[number_of_current_pair].second + 1;
@@ -50,15 +50,15 @@ void receive_message(int number_of_current_pair) {
 		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
 }
 struct receiver {
-	virtual bool wait_for_message(int number_of_current_pair_in) = 0;
-	virtual bool there_message(int number_of_current_pair_in) = 0;
+	virtual bool wait_for_message(int& number_of_current_pair_in) = 0;
+	virtual bool there_message(int& number_of_current_pair_in) = 0;
 };
 
 struct receiver_queue : receiver {
-	bool wait_for_message(int number_of_current_pair_in) {
+	bool wait_for_message(int& number_of_current_pair_in) {
 		return pairs[number_of_current_pair_in].first == pairs[number_of_current_pair_in].second ? true : false;
 	}
-	bool there_message(int number_of_current_pair_in) {
+	bool there_message(int& number_of_current_pair_in) {
 		if(pairs[number_of_current_pair_in].first != pairs[number_of_current_pair_in].second) {
 			receive_message(number_of_current_pair_in);
 			return true;
@@ -68,13 +68,13 @@ struct receiver_queue : receiver {
 
 struct receiver_socket : receiver {
 	int checkout;
-	bool wait_for_message(int socket) {
+	bool wait_for_message(int& socket) {
 		int result = 0;
 		int r = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
 		checkout = r;
 		return (r < 0) ? true : false;
 	}
-	bool there_message(int socket) {
+	bool there_message(int& socket) {
 		int result = 0;
 		if(checkout > 0) {
 			checkout = recv(socket, &result, sizeof(int), MSG_DONTWAIT);
@@ -86,11 +86,11 @@ struct receiver_socket : receiver {
 };
 
 struct sender {
-	virtual void send_message(int number_of_channel) = 0;
+	virtual void send_message(int& number_of_channel) = 0;
 };
 
 struct sender_queue : sender {
-	void send_message(int number_of_current_pair) {
+	void send_message(int& number_of_current_pair) {
 		if(pairs[number_of_current_pair].first != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
 			pairs[number_of_current_pair].first = pairs[number_of_current_pair].first + 1;
 		}
@@ -100,7 +100,7 @@ struct sender_queue : sender {
 };
 
 struct sender_socket : sender {
-	void send_message(int number_of_socket) {
+	void send_message(int& number_of_socket) {
 		int result = 0;
 		if (send(number_of_socket, &result, sizeof(int), 0) < 0) {
             handle_error("Error on send");
@@ -112,6 +112,7 @@ void * ss_module(void * arg) {
 	//starttime = timestamp();
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
+	int ss_channel = 0;
 	int propusk = 0;
 	long long int t_i = (long long int) starttime;
 
@@ -119,7 +120,8 @@ void * ss_module(void * arg) {
 
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			sq->send_message(0);
+
+			sq->send_message(ss_channel);
 			count_messages_ss++;
 		}
 		t_i = t_i + SLEEP_TIME;
