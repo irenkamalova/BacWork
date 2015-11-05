@@ -47,8 +47,10 @@ void receive_message(int& number_of_current_pair) {
 	if(pairs[number_of_current_pair].second != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
 		pairs[number_of_current_pair].second = pairs[number_of_current_pair].second + 1;
 	}
-	else
+	else {
 		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
+		cout << "переполнение!" << endl;
+    }
 }
 struct receiver {
 	virtual bool wait_for_message(int& number_of_current_pair_in) = 0;
@@ -319,8 +321,12 @@ void * module (void * arg) {
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	vector<Module::message_output> m_o = vals->get_all_message_output();
 
-	receiver *recv_object;
-	sender *send_object;
+	receiver *recv_object, *recv_object_q, *recv_object_s;
+	recv_object_q = new receiver_queue;
+	recv_object_s = new receiver_socket;
+	sender *send_object, *send_object_q, *send_object_s;
+	send_object_q = new sender_queue;
+	send_object_s = new sender_socket;
 	uint64_t delay = timestamp() - starttime;
 	while((long long int)(timestamp() - starttime - delay) < TIME) {
 
@@ -328,9 +334,9 @@ void * module (void * arg) {
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
 			if (!it->connection_type)
-				recv_object = new receiver_queue;
+				recv_object = recv_object_q;
 			else
-				recv_object = new receiver_socket;
+				recv_object = recv_object_s;
 			//check if there any message. If no, switch thread
 			while (recv_object->wait_for_message(it->channel_from)) {
 				if((long long int)(timestamp() - starttime) < TIME) {
@@ -377,22 +383,22 @@ void * module (void * arg) {
 								}
 							}
 							if (!m_o[k].connection_type) { // type = queue
-								send_object = new sender_queue;
+								send_object = send_object_q;
 							}
 							else { // type = socket
-								send_object = new sender_socket;
+								send_object = send_object_s;
 							}
 							send_object->send_message(m_o[k].channel_to);
 							array_for_file[vals->get_number()][index] = 1;
 							//cout << index << endl;
 							index++;
-							delete (send_object);
+							
 							//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
 						}
 					}
 				}
 			}
-			delete(recv_object);
+			
 		}
 	}
 	//close sockets for receiving
@@ -401,6 +407,10 @@ void * module (void * arg) {
 			close(it1->channel_from);
 		}
 	}
+	delete (send_object_q);
+	delete (send_object_s);
+	delete(recv_object_q);
+	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	//cout << vals->get_name() << " finished " << endl;
 }
