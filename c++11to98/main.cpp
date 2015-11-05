@@ -27,8 +27,8 @@ string str = "messages_result.txt";
 string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 250000;
-long long int array_for_file[20][140000];
+static const long long int SLEEP_TIME = 500000;
+long long int array_for_file[20][70000];
 int array_of_max_queue[20];
 
 vector<Module> parser();
@@ -424,7 +424,34 @@ void * module (void * arg) {
 		}		
 	}
 
-	cout << recv_index << '\t' << send_index << endl;
+    for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
+
+			if (!it->connection_type)
+				recv_object = recv_object_q;
+			else
+				recv_object = recv_object_s;
+
+			long_of_messages_queue = 0;
+			while (recv_object->there_message(it->channel_from)) {
+				long_of_messages_queue++;
+				if(max_long_of_messages_queue < long_of_messages_queue)
+					max_long_of_messages_queue = long_of_messages_queue;
+
+				//receiving
+				array_for_file[vals->get_number()][index] = 2; //bad
+				//cout << index << endl;
+				index++;
+				recv_index++;
+				for (l = 0; l < it->time_hand; l++) {
+					result = 1;
+					for (k = 1; k <= 250; k++) {
+						result = result * k;
+					}
+				}
+            }
+    }
+
+	//cout << recv_index << '\t' << send_index << endl;
 	if(!vals->get_affectation()) //if there no affectation
 		usleep(0);
 
