@@ -116,6 +116,7 @@ void * ss_module(void * arg) {
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
+	int ss_channel2 = 7;
 	int propusk = 0;
 	long long int t_i = (long long int) starttime;
 
@@ -125,6 +126,7 @@ void * ss_module(void * arg) {
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
 
 			sq->send_message(ss_channel);
+			sq->send_message(ss_channel2);
 			count_messages_ss++;
 		}
 		t_i = t_i + SLEEP_TIME;
@@ -145,7 +147,7 @@ void * ss_module(void * arg) {
 		}
 	}
 	cout << "AFTER SS END WORK" << endl;
-
+    delete(sq);
 	cout << count_messages_ss << endl;
 	cout << propusk << endl;
 }
@@ -253,7 +255,7 @@ int main(int argc, char *argv[]) {
             CPU_SET(0, &cpus);
             //param.sched_priority = newprio;
 
-        //pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
         //pthread_attr_setschedparam (&attr, &param);
         
 		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
@@ -282,14 +284,19 @@ int main(int argc, char *argv[]) {
 					count_rec++;
 				}
 			}
-
-			if(count_rec != 0)
-				cout << my_modules[i].get_name() << " получил сообщений " << count_rec
-				<< " цепочек " << count_rec / my_modules[i].get_nti() << endl;
-			if(count_send != 0)
-				cout << my_modules[i].get_name() << " отправил сообщений " << count_send
-				<< " цепочек " << count_send / my_modules[i].get_nto() << endl;
-			cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;
+            if(my_modules[i].get_name() != "РЕГ") {
+		        if(count_rec != 0)
+			        cout << my_modules[i].get_name() << " получил сообщений " << count_rec
+			        << " цепочек " << count_rec / my_modules[i].get_nti() << endl;
+		        if(count_send != 0)
+			        cout << my_modules[i].get_name() << " отправил сообщений " << count_send
+			        << " цепочек " << count_send / my_modules[i].get_nto() << endl;
+		        cout << "Mаксимальная длина очереди: " << array_of_max_queue[my_modules[i].get_number()] << endl;
+		   }
+		   else {
+                cout << my_modules[i].get_name() << " отправил сообщений " << count_rec
+                << " цепочек " << count_rec / 2 << endl;		   
+		   }     
 		}
 
 
@@ -317,9 +324,11 @@ void * module (void * arg) {
 	int index = 0;
 	int max_long_of_messages_queue = 0;
 	int long_of_messages_queue = 0;
+	long long int result = 1;
 	string name = vals->get_name();
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	vector<Module::message_output> m_o = vals->get_all_message_output();
+	int m = 0, l = 0, k = 0, n = 0;
 
 	receiver *recv_object, *recv_object_q, *recv_object_s;
 	recv_object_q = new receiver_queue;
@@ -355,9 +364,9 @@ void * module (void * arg) {
 				array_for_file[vals->get_number()][index] = 2; //bad
 				//cout << index << endl;
 				index++;
-				for (int l = 0; l < it->time_hand; l++) {
-					long long int result = 1;
-					for (int k = 1; k <= 250; k++) {
+				for (l = 0; l < it->time_hand; l++) {
+					result = 1;
+					for (k = 1; k <= 250; k++) {
 						result = result * k;
 					}
 				}
@@ -374,11 +383,11 @@ void * module (void * arg) {
 						}
 						current += vals->get_data_amount();
 					}
-					for(int m = 0; m < messages; m++) {
-						for (int k = 0; k < m_o.size(); k++) {
-							for (int l = 0; l < m_o[k].time_form; l++) {
-								long long int result = 1;
-								for (int n = 1; n <= 250; n++) {
+					for(m = 0; m < messages; m++) {
+						for (k = 0; k < m_o.size(); k++) {
+							for (l = 0; l < m_o[k].time_form; l++) {
+								result = 1;
+								for (n = 1; n <= 250; n++) {
 									result = result * n;
 								}
 							}
@@ -399,8 +408,10 @@ void * module (void * arg) {
 				}
 			}
 			
-		}
+		}		
 	}
+
+	usleep(0);
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 		if (it1->connection_type) {
