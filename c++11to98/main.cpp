@@ -248,13 +248,13 @@ int main(int argc, char *argv[]) {
             CPU_SET(0, &cpus);
             //param.sched_priority = newprio;
 
-        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+        //pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
         //pthread_attr_setschedparam (&attr, &param);
         
 		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
 			handle_error("Error on ss_thread create");
 		}
-        pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
+        //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         pthread_join(ss_thread, (void **) NULL);
 
 		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
