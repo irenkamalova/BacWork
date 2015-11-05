@@ -52,7 +52,6 @@ void receive_message(int number_of_current_pair) {
 struct receiver {
 	virtual bool wait_for_message(int number_of_current_pair_in) = 0;
 	virtual bool there_message(int number_of_current_pair_in) = 0;
-	virtual void check() = 0;
 };
 
 struct receiver_queue : receiver {
@@ -65,10 +64,6 @@ struct receiver_queue : receiver {
 			return true;
 		} else return false;
 	}
-	void check() {
-		cout << "queue" << endl;
-	}
-
 };
 
 struct receiver_socket : receiver {
@@ -87,9 +82,6 @@ struct receiver_socket : receiver {
 		}
 		else
 			return false;
-	}
-	void check() {
-		cout << "socket" << endl;
 	}
 };
 
@@ -155,7 +147,6 @@ void * ss_module(void * arg) {
 
 
 int main(int argc, char *argv[]) {
-	const char* both_way = "queue_and_socket";
 	
 	if (argc == 2) {
 		int my_machine = atoi(argv[1]);
@@ -237,8 +228,8 @@ int main(int argc, char *argv[]) {
 		pthread_attr_init(&attr);
 		cpu_set_t cpus;
 		int cpu_id = 0;		
-		int newprio = 100;
-        sched_param param; 
+		//int newprio = 100;
+        //sched_param param;
               
         
 		vector<pthread_t> thids;
@@ -255,10 +246,10 @@ int main(int argc, char *argv[]) {
 		CPU_ZERO(&cpus);
         //for (int j = 0; j < 2; j++)
             CPU_SET(0, &cpus);
-            param.sched_priority = newprio;  
+            //param.sched_priority = newprio;
 
         pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-        pthread_attr_setschedparam (&attr, &param);
+        //pthread_attr_setschedparam (&attr, &param);
         
 		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
 			handle_error("Error on ss_thread create");
