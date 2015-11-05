@@ -27,8 +27,8 @@ string str = "messages_result.txt";
 string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 1000000;
-long long int array_for_file[20][80000];
+static const long long int SLEEP_TIME = 250000;
+long long int array_for_file[20][140000];
 int array_of_max_queue[20];
 
 vector<Module> parser();
@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
 
 		CPU_ZERO(&cpus);
         //for (int j = 0; j < 2; j++)
-            CPU_SET(0, &cpus);
+            CPU_SET(cpu_id, &cpus);
             //param.sched_priority = newprio;
 
         pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
@@ -325,12 +325,14 @@ int main(int argc, char *argv[]) {
 void * module (void * arg) {
     //uint64_t delay = timestamp() - starttime;
 	Module * vals = (Module *) arg;
-	int number_of_current_pair_in;
-	int number_of_current_pair_out;
+//	int text-right;
+//	int number_of_current_pair_out;
 	double counter = 0.5;
 	double current = vals->get_data_amount();
 	short messages = 1;
 	int index = 0;
+	int recv_index = 0;
+	int send_index = 0;
 	int max_long_of_messages_queue = 0;
 	int long_of_messages_queue = 0;
 	long long int result = 1;
@@ -357,7 +359,7 @@ void * module (void * arg) {
 				recv_object = recv_object_s;
 			//check if there any message. If no, switch thread
 			while (recv_object->wait_for_message(it->channel_from)) {
-				if((long long int)(timestamp() - starttime) < TIME) {
+				if((long long int)(timestamp() - starttime - delay) < TIME) {
 					if(!vals->get_affectation()) //if there no affectation
 						usleep(0);
 				}
@@ -373,6 +375,7 @@ void * module (void * arg) {
 				array_for_file[vals->get_number()][index] = 2; //bad
 				//cout << index << endl;
 				index++;
+				recv_index++;
 				for (l = 0; l < it->time_hand; l++) {
 					result = 1;
 					for (k = 1; k <= 250; k++) {
@@ -410,6 +413,7 @@ void * module (void * arg) {
 							array_for_file[vals->get_number()][index] = 1;
 							//cout << index << endl;
 							index++;
+							send_index++;
 							
 							//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
 						}
@@ -420,7 +424,10 @@ void * module (void * arg) {
 		}		
 	}
 
-	usleep(0);
+	cout << recv_index << '\t' << send_index << endl;
+	if(!vals->get_affectation()) //if there no affectation
+		usleep(0);
+
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 		if (it1->connection_type) {
