@@ -30,6 +30,7 @@ static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 1000000;
 long long int array_for_file[20][70000];
 int array_of_max_queue[20];
+int array_of_queue[20][20000];
 
 vector<Module> parser();
 int create_socket(int *port, string *ip_address);
@@ -313,6 +314,16 @@ int main(int argc, char *argv[]) {
 		    }
 		}
 
+		for(int i = 0; i < my_modules.size(); i++) {
+			cout << modules[i].get_name() << endl;
+			int k = 0;
+			while(array_of_queue[modules[i].get_number()][k] != 300)
+			{
+				cout << array_of_queue[modules[i].get_number()][k] << " ";
+				k++;
+			}
+			cout << endl;
+		} 
 
 		//fout.close();
 		cout << "finished" << endl;
@@ -336,8 +347,8 @@ void * module (void * arg) {
 	double current = vals->get_data_amount();
 	short messages = 1;
 	int index = 0;
-	int recv_index = 0;
-	int send_index = 0;
+	int recv_index = 0; //for messages queue
+	//int send_index = 0;
 	int max_long_of_messages_queue = 0;
 	int long_of_messages_queue = 0;
 	long long int result = 1;
@@ -366,11 +377,8 @@ void * module (void * arg) {
 			//check if there any message. If no, switch thread
 			if (recv_object->wait_for_message(it->channel_from)) {
 
-				if ((long long int) (timestamp() - starttime ) < TIME) {
 					if (!vals->get_affectation()) //if there no affectation
 						usleep(0);
-				}
-				else break;
 			}
 
 			else {
@@ -396,6 +404,9 @@ void * module (void * arg) {
 					if (it->parameter)
 						mess_by_param++;
 				}
+				array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
+
+				recv_index++;
 			}
 		}
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
@@ -434,8 +445,6 @@ void * module (void * arg) {
 					array_for_file[vals->get_number()][index] = 1;
 					//cout << index << endl;
 					index++;
-					send_index++;
-
 					//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
 				}
 			}
@@ -458,6 +467,7 @@ void * module (void * arg) {
 	delete(recv_object_q);
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
+	array_of_queue[vals->get_number()][recv_index] = 300;
 	//cout << vals->get_name() << " finished " << endl;
 }
 
