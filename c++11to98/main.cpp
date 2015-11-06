@@ -399,18 +399,19 @@ void * module (void * arg) {
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
 				//sending
 
-		if (vals->get_data_amount() != 1) {
-			if (current < counter) {
-				messages = 0;
+
+		for (m = 0; m < mess_by_param; m++) {
+			if (vals->get_data_amount() != 1) {
+				if (current < counter) {
+					messages = 0;
+				}
+				else {
+					messages = 1;
+					counter += 1.0;
+				}
+				current += vals->get_data_amount();
 			}
-			else {
-				messages = 1;
-				counter += 1.0;
-			}
-			current += vals->get_data_amount();
-		}
-		for (m = 0; m < messages; m++) {
-			for (i = 0; i < mess_by_param; i++) {
+			for (i = 0; i < messages; i++) {
 				for (k = 0; k < m_o.size(); k++) {
 					for (l = 0; l < m_o[k].time_form; l++) {
 						result = 1;
@@ -436,8 +437,8 @@ void * module (void * arg) {
 					//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
 				}
 			}
-			mess_by_param = 0;
 		}
+		mess_by_param = 0;
 	}
 
 	//cout << recv_index << '\t' << send_index << endl;
