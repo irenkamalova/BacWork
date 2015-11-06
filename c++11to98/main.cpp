@@ -27,7 +27,7 @@ string str = "messages_result.txt";
 string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 500000;
+static const long long int SLEEP_TIME = 1000000;
 long long int array_for_file[20][70000];
 int array_of_max_queue[20];
 
@@ -89,25 +89,28 @@ struct receiver_socket : receiver {
 };
 
 struct sender {
-	virtual void send_message(int& number_of_channel) = 0;
+	virtual int send_message(int& number_of_channel) = 0;
 };
 
 struct sender_queue : sender {
-	void send_message(int& number_of_current_pair) {
+	int send_message(int& number_of_current_pair) {
 		if(pairs[number_of_current_pair].first != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
 			pairs[number_of_current_pair].first = pairs[number_of_current_pair].first + 1;
 		}
 		else
 			pairs[number_of_current_pair].first = &datas[number_of_current_pair][0];
+		return 0;
 	}
 };
 
 struct sender_socket : sender {
-	void send_message(int& number_of_socket) {
+	int send_message(int& number_of_socket) {
 		int result = 0;
 		if (send(number_of_socket, &result, sizeof(int), 0) < 0) {
-            handle_error("Error on send");
+            perror("Error on send");
+			return -1;
 		}
+		return 0;
 	}
 };
 
@@ -220,6 +223,41 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 		cout << "after join" << endl;
+
+		//initialisation
+		pthread_t ss_thread;
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		cpu_set_t cpus;
+		int cpu_id = 0;
+		//int newprio = 100;
+		//sched_param param;
+
+
+		vector<pthread_t> thids;
+		starttime = timestamp();
+		for(int i = 0; i < my_modules.size(); i++) {
+			thids.push_back(thread);
+			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
+				perror("Error on thread create");
+			}
+		}
+
+
+
+		CPU_ZERO(&cpus);
+		//for (int j = 0; j < 2; j++)
+		CPU_SET(cpu_id, &cpus);
+		//param.sched_priority = newprio;
+
+		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+		//pthread_attr_setschedparam (&attr, &param);
+
+		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
+			handle_error("Error on ss_thread create");
+		}
+		//after SS thread we start others threads
+
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_input> m_i = my_modules[i].get_all_message_input();
 			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
@@ -227,39 +265,6 @@ int main(int argc, char *argv[]) {
 					cout << it1->channel_from << endl;
 				}
 			}
-		}
-        
-        //initialisation
- 		pthread_t ss_thread;
-		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-		cpu_set_t cpus;
-		int cpu_id = 0;		
-		//int newprio = 100;
-        //sched_param param;
-              
-        
-		vector<pthread_t> thids;
-		starttime = timestamp();
-		for(int i = 0; i < my_modules.size(); i++) {
-			thids.push_back(thread);
-			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
-				handle_error("Error on thread create");
-			}
-		}
-        
-
-
-		CPU_ZERO(&cpus);
-        //for (int j = 0; j < 2; j++)
-            CPU_SET(cpu_id, &cpus);
-            //param.sched_priority = newprio;
-
-        pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-        //pthread_attr_setschedparam (&attr, &param);
-        
-		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
-			handle_error("Error on ss_thread create");
 		}
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         pthread_join(ss_thread, (void **) NULL);
@@ -339,7 +344,9 @@ void * module (void * arg) {
 	string name = vals->get_name();
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	vector<Module::message_output> m_o = vals->get_all_message_output();
-	int m = 0, l = 0, k = 0, n = 0;
+	int i = 0, m = 0, l = 0, k = 0, n = 0;
+
+	int mess_by_param = 0;
 
 	receiver *recv_object, *recv_object_q, *recv_object_s;
 	recv_object_q = new receiver_queue;
@@ -350,110 +357,92 @@ void * module (void * arg) {
 	uint64_t delay = timestamp() - starttime;
 	while((long long int)(timestamp() - starttime - delay) < TIME) {
 
-
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
-
+			long_of_messages_queue = 0;
 			if (!it->connection_type)
 				recv_object = recv_object_q;
 			else
 				recv_object = recv_object_s;
 			//check if there any message. If no, switch thread
-			while (recv_object->wait_for_message(it->channel_from)) {
-				if((long long int)(timestamp() - starttime - delay) < TIME) {
-					if(!vals->get_affectation()) //if there no affectation
+			if (recv_object->wait_for_message(it->channel_from)) {
+
+				if ((long long int) (timestamp() - starttime - delay) < TIME) {
+					if (!vals->get_affectation()) //if there no affectation
 						usleep(0);
 				}
 				else break;
 			}
-			long_of_messages_queue = 0;
-			while (recv_object->there_message(it->channel_from)) {
-				long_of_messages_queue++;
-				if(max_long_of_messages_queue < long_of_messages_queue)
-					max_long_of_messages_queue = long_of_messages_queue;
 
-				//receiving
-				array_for_file[vals->get_number()][index] = 2; //bad
-				//cout << index << endl;
-				index++;
-				recv_index++;
-				for (l = 0; l < it->time_hand; l++) {
-					result = 1;
-					for (k = 1; k <= 250; k++) {
-						result = result * k;
+			else
+				while (recv_object->there_message(it->channel_from)) {
+
+					long_of_messages_queue++;
+					if (max_long_of_messages_queue < long_of_messages_queue)
+						max_long_of_messages_queue = long_of_messages_queue;
+
+					//receiving
+					array_for_file[vals->get_number()][index] = 2; //bad
+					//cout << index << endl;
+					index++;
+					recv_index++;
+					for (l = 0; l < it->time_hand; l++) {
+						result = 1;
+						for (k = 1; k <= 250; k++) {
+							result = result * k;
+						}
 					}
+
+					if (it->parameter)
+						mess_by_param++;
 				}
+		}
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
 				//sending
-				if (it->parameter) {
-					if(vals->get_data_amount() != 1) {
-						if (current < counter) {
-							messages = 0;
-						}
-						else {
-							messages = 1;
-							counter += 1.0;
-						}
-						current += vals->get_data_amount();
-					}
-					for(m = 0; m < messages; m++) {
-						for (k = 0; k < m_o.size(); k++) {
-							for (l = 0; l < m_o[k].time_form; l++) {
-								result = 1;
-								for (n = 1; n <= 250; n++) {
-									result = result * n;
-								}
-							}
-							if (!m_o[k].connection_type) { // type = queue
-								send_object = send_object_q;
-							}
-							else { // type = socket
-								send_object = send_object_s;
-							}
-							send_object->send_message(m_o[k].channel_to);
-							array_for_file[vals->get_number()][index] = 1;
-							//cout << index << endl;
-							index++;
-							send_index++;
-							
-							//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
+
+		if (vals->get_data_amount() != 1) {
+			if (current < counter) {
+				messages = 0;
+			}
+			else {
+				messages = 1;
+				counter += 1.0;
+			}
+			current += vals->get_data_amount();
+		}
+		for (m = 0; m < messages; m++) {
+			for (i = 0; i < mess_by_param; i++) {
+				for (k = 0; k < m_o.size(); k++) {
+					for (l = 0; l < m_o[k].time_form; l++) {
+						result = 1;
+						for (n = 1; n <= 250; n++) {
+							result = result * n;
 						}
 					}
+					if (!m_o[k].connection_type) { // type = queue
+						send_object = send_object_q;
+					}
+					else { // type = socket
+						send_object = send_object_s;
+					}
+					if(send_object->send_message(m_o[k].channel_to) == -1) {
+						cout << vals->get_name() << endl;
+					}
+
+					array_for_file[vals->get_number()][index] = 1;
+					//cout << index << endl;
+					index++;
+					send_index++;
+
+					//cout << vals->get_name() << " sent to " << m_o[k].name_to << endl;
 				}
 			}
-			
-		}		
+			mess_by_param = 0;
+		}
 	}
 
-    for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
-
-			if (!it->connection_type)
-				recv_object = recv_object_q;
-			else
-				recv_object = recv_object_s;
-
-			long_of_messages_queue = 0;
-			while (recv_object->there_message(it->channel_from)) {
-				long_of_messages_queue++;
-				if(max_long_of_messages_queue < long_of_messages_queue)
-					max_long_of_messages_queue = long_of_messages_queue;
-
-				//receiving
-				array_for_file[vals->get_number()][index] = 2; //bad
-				//cout << index << endl;
-				index++;
-				recv_index++;
-				for (l = 0; l < it->time_hand; l++) {
-					result = 1;
-					for (k = 1; k <= 250; k++) {
-						result = result * k;
-					}
-				}
-            }
-    }
-
 	//cout << recv_index << '\t' << send_index << endl;
-	if(!vals->get_affectation()) //if there no affectation
-		usleep(0);
+	//if(!vals->get_affectation()) //if there no affectation
+		sleep(5);
 
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
