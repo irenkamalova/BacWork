@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
 				k++;
 			}
 			cout << endl;
-		} 
+		}
 
 		//fout.close();
 		cout << "finished" << endl;
@@ -374,14 +374,19 @@ void * module (void * arg) {
 				recv_object = recv_object_q;
 			else
 				recv_object = recv_object_s;
+			bool flag = recv_object->wait_for_message(it->channel_from);
+			if(vals->get_number() == 0)
+				cout << "before:" << flag << endl;
 			//check if there any message. If no, switch thread
-			if (recv_object->wait_for_message(it->channel_from)) {
+			if (flag) {
 
 					if (!vals->get_affectation()) //if there no affectation
 						usleep(0);
 			}
 
 			else {
+				if(vals->get_number() == 0)
+					cout << "after:" << recv_object->wait_for_message(it->channel_from) << endl;
 				long_of_messages_queue = 0;
 				while (recv_object->there_message(it->channel_from)) {
 
