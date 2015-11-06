@@ -354,8 +354,8 @@ void * module (void * arg) {
 	sender *send_object, *send_object_q, *send_object_s;
 	send_object_q = new sender_queue;
 	send_object_s = new sender_socket;
-	uint64_t delay = timestamp() - starttime;
-	while((long long int)(timestamp() - starttime - delay) < TIME) {
+	//uint64_t delay = timestamp() - starttime;
+	while((long long int)(timestamp() - starttime ) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
@@ -366,7 +366,7 @@ void * module (void * arg) {
 			//check if there any message. If no, switch thread
 			if (recv_object->wait_for_message(it->channel_from)) {
 
-				if ((long long int) (timestamp() - starttime - delay) < TIME) {
+				if ((long long int) (timestamp() - starttime ) < TIME) {
 					if (!vals->get_affectation()) //if there no affectation
 						usleep(0);
 				}
