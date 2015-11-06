@@ -358,7 +358,7 @@ void * module (void * arg) {
 	while((long long int)(timestamp() - starttime - delay) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
-			long_of_messages_queue = 0;
+
 			if (!it->connection_type)
 				recv_object = recv_object_q;
 			else
@@ -373,7 +373,8 @@ void * module (void * arg) {
 				else break;
 			}
 
-			else
+			else {
+				long_of_messages_queue = 0;
 				while (recv_object->there_message(it->channel_from)) {
 
 					long_of_messages_queue++;
@@ -395,6 +396,7 @@ void * module (void * arg) {
 					if (it->parameter)
 						mess_by_param++;
 				}
+			}
 		}
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
 				//sending
