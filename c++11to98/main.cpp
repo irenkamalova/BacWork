@@ -122,10 +122,13 @@ void * ss_module(void * arg) {
 	int ss_channel = 0;
 	int ss_channel2 = 7;
 	int propusk = 0;
+	int index = 0;
+	int k = 0;
+	int array_if_indexes[1000];
 	long long int t_i = (long long int) starttime;
 
 	while((long long int)(timestamp() - starttime) < TIME_SS) {
-
+        index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
 
@@ -134,16 +137,13 @@ void * ss_module(void * arg) {
 			count_messages_ss++;
 		}
 		t_i = t_i + SLEEP_TIME;
-/*
-		while( (t_i < (long long int)timestamp())  ) {
-			t_i = t_i + SLEEP_TIME;
-			for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			    sq->send_message(0);
-			    count_messages_ss++;
-		    }
+
+		if( (t_i < (long long int)timestamp())  ) {
 			propusk++;
+			array_if_indexes[k] = index;
+			k++;
 		}
-*/
+
 		//long long int for_usleep = (t_i - (long long int)timestamp()) / 1000;
 		//uint64_t now_plus = timestamp() + for_usleep;
 		while(  (t_i  > (long long int)timestamp() ) ) {
@@ -154,6 +154,10 @@ void * ss_module(void * arg) {
     delete(sq);
 	cout << count_messages_ss << endl;
 	cout << propusk << endl;
+	for(int i = 0; array_if_indexes[i] != 0; i++) {
+	    cout << array_if_indexes[i] << " " ;
+	}
+	cout << endl;
 }
 
 
@@ -318,8 +322,12 @@ int main(int argc, char *argv[]) {
 			cout << modules[i].get_name() << endl;
 			int k = 0;
 			while(array_of_queue[modules[i].get_number()][k] != 300)
-			{
-				cout << array_of_queue[modules[i].get_number()][k] << " ";
+			{   
+			    if(array_of_queue[modules[i].get_number()][k] != 1) {
+				    cout << array_of_queue[modules[i].get_number()][k] << " ";
+				    cout << "Place: ";
+				    cout << k << endl;
+				}
 				k++;
 			}
 			cout << endl;
@@ -375,8 +383,6 @@ void * module (void * arg) {
 			else
 				recv_object = recv_object_s;
 			bool flag = recv_object->wait_for_message(it->channel_from);
-			if(vals->get_number() == 0)
-				cout << "before:" << flag << endl;
 			//check if there any message. If no, switch thread
 			if (flag) {
 
@@ -385,8 +391,7 @@ void * module (void * arg) {
 			}
 
 			else {
-				if(vals->get_number() == 0)
-					cout << "after:" << recv_object->wait_for_message(it->channel_from) << endl;
+
 				long_of_messages_queue = 0;
 				while (recv_object->there_message(it->channel_from)) {
 
@@ -398,7 +403,6 @@ void * module (void * arg) {
 					array_for_file[vals->get_number()][index] = 2; //bad
 					//cout << index << endl;
 					index++;
-					recv_index++;
 					for (l = 0; l < it->time_hand; l++) {
 						result = 1;
 						for (k = 1; k <= 250; k++) {
