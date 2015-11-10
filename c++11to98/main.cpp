@@ -174,14 +174,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		for(int i = 0; i < my_modules.size(); i++) {
-			vector<Module::message_input> m_i = modules[i].get_all_message_input();
-			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-				if(it1->connection_type) {
-					cout << it1->channel_from << endl;
-				}
-			}
-		}
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
 		pthread_t thread;
@@ -194,15 +186,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		sleep(2);
-		cout << "before connect " << endl;
-		for(int i = 0; i < my_modules.size(); i++) {
-			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
-			for (int k = 0; k < m_o.size(); k++) {
-				if (m_o[k].connection_type) {
-					cout << m_o[k].channel_to << endl;
-				}
-			}
-		}
+
 
 		for(int i = 0; i < my_modules.size(); i++) {
 			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
@@ -210,15 +194,6 @@ int main(int argc, char *argv[]) {
 				if (m_o[k].connection_type) {
 					m_o[k].channel_to = create_socket(&m_o[k].port_to, &m_o[k].ip_address_to);
 					my_modules[i].message_output_array[k].channel_to = m_o[k].channel_to;
-				}
-			}
-		}
-		cout << "after connect " << endl;
-		for(int i = 0; i < my_modules.size(); i++) {
-			vector<Module::message_output> m_o = my_modules[i].get_all_message_output();
-			for (int k = 0; k < m_o.size(); k++) {
-				if (m_o[k].connection_type) {
-					cout << m_o[k].channel_to << endl;
 				}
 			}
 		}
@@ -263,14 +238,6 @@ int main(int argc, char *argv[]) {
 		}
 		//after SS thread we start others threads
 
-		for(int i = 0; i < my_modules.size(); i++) {
-			vector<Module::message_input> m_i = my_modules[i].get_all_message_input();
-			for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-				if(it1->connection_type) {
-					cout << it1->channel_from << endl;
-				}
-			}
-		}
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         pthread_join(ss_thread, (void **) NULL);
 
@@ -333,11 +300,8 @@ int main(int argc, char *argv[]) {
 			cout << endl;
 		}
 
-		//fout.close();
 		cout << "finished" << endl;
-		//QueueAndSockets *queueAndSockets = new QueueAndSockets;
-		//queueAndSockets->run(my_modules);
-		//delete(queueAndSockets);
+
 //*/
 	} else {
 		cerr << "Wrong number of arguments. Input the number of your machine.";
