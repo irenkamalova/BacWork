@@ -26,12 +26,12 @@ uint64_t timestamp() {
 uint64_t starttime;
 
 string str = "messages_result.txt";
-string s = "modules.txt";
+string s = "/home/newuser/ClionProjects/BacWork/c++11to98/modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 1000000;
 int array_for_file[20][70000];
-int array_of_max_queue[20];
+long long int array_of_max_queue[20];
 long long int array_of_queue[20][20000];
 //vector<map<int, long long int> >
 
@@ -42,7 +42,7 @@ void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
 vector<pair<int*, int*> > pairs(20);
 int datas[40][50];
-const int LENGTH_OF_ARRAY = 50;
+const int LENGTH_OF_ARRAY = 100;
 
 void write_into_file(Module * vals, ofstream *fout);
 
@@ -132,18 +132,7 @@ void * ss_module(void * arg) {
 	int array_if_indexes[1000];
 	long long int t_i = (long long int) starttime;
 	
-	int newprio = 99;
 
-	sched_param param; 
-	param.sched_priority = newprio;   
-    int pid = getpid();
-    cout << "pid " << pid << endl;
-    cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;
-    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
-        perror("on setscheduler: ");
-    } 
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;
 	while((long long int)(timestamp() - starttime) < TIME_SS) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
@@ -307,9 +296,8 @@ int main(int argc, char *argv[]) {
 			{   			   
 				    cout << array_of_queue[modules[i].get_number()][k] << " ";
 				    k++;
-				    cout << array_of_queue[modules[i].get_number()][k];
+				    cout << array_of_queue[modules[i].get_number()][k] << endl;
 				    k++;
-				
 			}
 			cout << endl;
 		}
@@ -352,13 +340,7 @@ void * module (void * arg) {
 	send_object_s = new sender_socket;
 	//uint64_t delay = timestamp() - starttime;
 
-	int newprio = 99;
-	sched_param param; 
-	param.sched_priority = newprio;   
-    int pid = getpid();
-    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
-        perror("on setscheduler: ");
-    } 
+
 
 	while((long long int)(timestamp() - starttime) < TIME) {
 
@@ -399,12 +381,12 @@ void * module (void * arg) {
 					if (it->parameter)
 						mess_by_param++;
 				}
-				
+				if(long_of_messages_queue > 1) {
 			    	array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
 			    	recv_index++;
-			    	//array_of_queue[vals->get_number()][recv_index] = timestamp();
-			    	//recv_index++;
-			    
+			        array_of_queue[vals->get_number()][recv_index] = (long long int)timestamp();
+			    	recv_index++;
+			    }
 			}
 		}
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
