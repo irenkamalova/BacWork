@@ -10,6 +10,8 @@
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
+#include <sched.h>
+#include <map>
 
 #define handle_error(msg) \
                do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -28,9 +30,10 @@ string s = "modules.txt";
 static const long long int TIME_SS = 10000000000; // 10 seconds
 static const long long int TIME = 10000000000;
 static const long long int SLEEP_TIME = 1000000;
-long long int array_for_file[20][70000];
+int array_for_file[20][70000];
 int array_of_max_queue[20];
-int array_of_queue[20][20000];
+long long int array_of_queue[20][20000];
+//vector<map<int, long long int> >
 
 vector<Module> parser();
 int create_socket(int *port, string *ip_address);
@@ -117,6 +120,8 @@ struct sender_socket : sender {
 
 void * ss_module(void * arg) {
 	//starttime = timestamp();
+	
+	
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
@@ -126,7 +131,19 @@ void * ss_module(void * arg) {
 	int k = 0;
 	int array_if_indexes[1000];
 	long long int t_i = (long long int) starttime;
+	
+	int newprio = 99;
 
+	sched_param param; 
+	param.sched_priority = newprio;   
+    int pid = getpid();
+    cout << "pid " << pid << endl;
+    cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
+    cout <<  "sched: " << sched_getscheduler(pid) << endl;
+    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+        perror("on setscheduler: ");
+    } 
+    cout <<  "sched: " << sched_getscheduler(pid) << endl;
 	while((long long int)(timestamp() - starttime) < TIME_SS) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
@@ -164,6 +181,7 @@ void * ss_module(void * arg) {
 int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
+	
 		int my_machine = atoi(argv[1]);
 		vector<Module> modules = parser();
 		 //modules for this machine
@@ -210,9 +228,6 @@ int main(int argc, char *argv[]) {
 		pthread_attr_init(&attr);
 		cpu_set_t cpus;
 		int cpu_id = 0;
-		//int newprio = 100;
-		//sched_param param;
-
 
 		vector<pthread_t> thids;
 		starttime = timestamp();
@@ -289,20 +304,18 @@ int main(int argc, char *argv[]) {
 			cout << modules[i].get_name() << endl;
 			int k = 0;
 			while(array_of_queue[modules[i].get_number()][k] != 300)
-			{   
-			    if(array_of_queue[modules[i].get_number()][k] != 1) {
+			{   			   
 				    cout << array_of_queue[modules[i].get_number()][k] << " ";
-				    cout << "Place: ";
-				    cout << k << endl;
-				}
-				k++;
+				    k++;
+				    cout << array_of_queue[modules[i].get_number()][k];
+				    k++;
+				
 			}
 			cout << endl;
 		}
 
 		cout << "finished" << endl;
 
-//*/
 	} else {
 		cerr << "Wrong number of arguments. Input the number of your machine.";
 		return 1;
@@ -330,7 +343,7 @@ void * module (void * arg) {
 	int i = 0, m = 0, l = 0, k = 0, n = 0;
 
 	int mess_by_param = 0;
-
+	
 	receiver *recv_object, *recv_object_q, *recv_object_s;
 	recv_object_q = new receiver_queue;
 	recv_object_s = new receiver_socket;
@@ -338,7 +351,16 @@ void * module (void * arg) {
 	send_object_q = new sender_queue;
 	send_object_s = new sender_socket;
 	//uint64_t delay = timestamp() - starttime;
-	while((long long int)(timestamp() - starttime ) < TIME) {
+
+	int newprio = 99;
+	sched_param param; 
+	param.sched_priority = newprio;   
+    int pid = getpid();
+    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+        perror("on setscheduler: ");
+    } 
+
+	while((long long int)(timestamp() - starttime) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
@@ -377,9 +399,12 @@ void * module (void * arg) {
 					if (it->parameter)
 						mess_by_param++;
 				}
-				array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
-
-				recv_index++;
+				
+			    	array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
+			    	recv_index++;
+			    	//array_of_queue[vals->get_number()][recv_index] = timestamp();
+			    	//recv_index++;
+			    
 			}
 		}
 				//cout << vals->get_name() << " received from " << it->name_from << endl;
