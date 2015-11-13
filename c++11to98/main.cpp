@@ -13,26 +13,38 @@
 #include <sched.h>
 #include <map>
 
+#define BILLION 1000000000L
+
 #define handle_error(msg) \
                do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 uint64_t timestamp() {
 	timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-	return (static_cast<uint64_t>(ts.tv_sec) * 10000000u
-			+ static_cast<uint64_t>(ts.tv_nsec) / 100u) * 100u;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return static_cast<uint64_t>(ts.tv_sec) * BILLION + static_cast<uint64_t>(ts.tv_nsec);
+}
+
+void wait_n_microsec(int n) {
+    int l, k;
+    long long int unsigned result;
+    for (l = 0; l < n; l++) {
+		result = 1;
+		for (k = 1; k <= 80; k++) {
+			result = result * k;
+		}
+	}
 }
 
 uint64_t starttime;
 
 string str = "messages_result.txt";
-string s = "/home/newuser/ClionProjects/BacWork/c++11to98/modules.txt";
-static const long long int TIME_SS = 10000000000; // 10 seconds
-static const long long int TIME = 10000000000;
-static const long long int SLEEP_TIME = 1000000;
+string s = "modules.txt";
+static const uint64_t TIME_SS = 10000000000; // 10 seconds
+static const uint64_t TIME = 10000000000;
+static const uint64_t SLEEP_TIME = 1000000;
 int array_for_file[20][70000];
-long long int array_of_max_queue[20];
-long long int array_of_queue[20][20000];
+uint64_t array_of_max_queue[20];
+uint64_t array_of_queue[20][20000];
 //vector<map<int, long long int> >
 
 vector<Module> parser();
@@ -43,6 +55,8 @@ void* module(void * arg);
 vector<pair<int*, int*> > pairs(20);
 int datas[40][50];
 const int LENGTH_OF_ARRAY = 100;
+
+short global_sync_flag = 0;
 
 void write_into_file(Module * vals, ofstream *fout);
 
@@ -121,7 +135,18 @@ struct sender_socket : sender {
 void * ss_module(void * arg) {
 	//starttime = timestamp();
 	
-	
+	int newprio = 99;
+    sched_param param; 
+    param.sched_priority = newprio;   
+    int pid = getpid();
+    cout << "pid " << pid << endl;
+    cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
+    cout <<  "sched: " << sched_getscheduler(pid) << endl;
+    
+    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+        perror("on setscheduler: ");
+    } 
+    cout <<  "sched: " << sched_getscheduler(pid) << endl;
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
@@ -130,10 +155,10 @@ void * ss_module(void * arg) {
 	int index = 0;
 	int k = 0;
 	int array_if_indexes[1000];
-	long long int t_i = (long long int) starttime;
+	uint64_t t_i = starttime;
 	
 
-	while((long long int)(timestamp() - starttime) < TIME_SS) {
+	while((timestamp() - starttime) < TIME_SS) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
@@ -144,7 +169,7 @@ void * ss_module(void * arg) {
 		}
 		t_i = t_i + SLEEP_TIME;
 
-		if( (t_i < (long long int)timestamp())  ) {
+		if( (t_i < timestamp())  ) {
 			propusk++;
 			array_if_indexes[k] = index;
 			k++;
@@ -152,10 +177,11 @@ void * ss_module(void * arg) {
 
 		//long long int for_usleep = (t_i - (long long int)timestamp()) / 1000;
 		//uint64_t now_plus = timestamp() + for_usleep;
-		while(  (t_i  > (long long int)timestamp() ) ) {
+		while(  (t_i  > timestamp() ) ) {
 		    //usleep(0);
 		}
 	}
+    global_sync_flag = 1;
 	cout << "AFTER SS END WORK" << endl;
     delete(sq);
 	cout << count_messages_ss << endl;
@@ -342,7 +368,7 @@ void * module (void * arg) {
 
 
 
-	while((long long int)(timestamp() - starttime) < TIME) {
+	while(global_sync_flag == 0) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
@@ -371,20 +397,22 @@ void * module (void * arg) {
 					array_for_file[vals->get_number()][index] = 2; //bad
 					//cout << index << endl;
 					index++;
+                    wait_n_microsec(it->time_hand);
+/*
 					for (l = 0; l < it->time_hand; l++) {
 						result = 1;
 						for (k = 1; k <= 250; k++) {
 							result = result * k;
 						}
 					}
-
+*/
 					if (it->parameter)
 						mess_by_param++;
 				}
 				if(long_of_messages_queue > 1) {
 			    	array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
 			    	recv_index++;
-			        array_of_queue[vals->get_number()][recv_index] = (long long int)timestamp();
+			        //array_of_queue[vals->get_number()][recv_index] = timestamp();
 			    	recv_index++;
 			    }
 			}
@@ -406,21 +434,25 @@ void * module (void * arg) {
 			}
 			for (i = 0; i < messages; i++) {
 				for (k = 0; k < m_o.size(); k++) {
+                    wait_n_microsec(m_o[k].time_form);
+/*
 					for (l = 0; l < m_o[k].time_form; l++) {
 						result = 1;
 						for (n = 1; n <= 250; n++) {
 							result = result * n;
 						}
 					}
+*/
 					if (!m_o[k].connection_type) { // type = queue
 						send_object = send_object_q;
 					}
 					else { // type = socket
 						send_object = send_object_s;
 					}
-					if(send_object->send_message(m_o[k].channel_to) == -1) {
-						cout << vals->get_name() << endl;
-					}
+                    send_object->send_message(m_o[k].channel_to);
+					//if(send_object->send_message(m_o[k].channel_to) == -1) {
+						//cout << vals->get_name() << endl;
+					//}
 
 					array_for_file[vals->get_number()][index] = 1;
 					//cout << index << endl;
