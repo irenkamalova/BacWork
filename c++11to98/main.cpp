@@ -53,7 +53,7 @@ void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
 vector<pair<int*, int*> > pairs(20);
 int datas[40][50];
-const int LENGTH_OF_ARRAY = 100;
+const int LENGTH_OF_ARRAY = 50;
 
 short global_sync_flag = 0;
 
@@ -132,15 +132,7 @@ struct sender_socket : sender {
 };
 
 void * ss_module(void * arg) {
-	//starttime = timestamp();
-	int newprio = 99;
-    sched_param param; 
-    param.sched_priority = newprio;   
-    int pid = getpid();   
-    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
-        perror("on setscheduler: ");
-    } 
-    
+	//starttime = timestamp();    
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
@@ -234,9 +226,17 @@ int main(int argc, char *argv[]) {
 		pthread_attr_init(&attr);
 		cpu_set_t cpus;
 		int cpu_id = 0;
-
+		CPU_ZERO(&cpus);
+		CPU_SET(cpu_id, &cpus);
+		//param.sched_priority = newprio;
+		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+		//pthread_attr_setschedparam (&attr, &param);
 		vector<pthread_t> thids;
 		starttime = timestamp();
+		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
+			handle_error("Error on ss_thread create");
+		}
+		
 		for(int i = 0; i < my_modules.size(); i++) {
 			thids.push_back(thread);
 			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
@@ -244,19 +244,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-
-
-		CPU_ZERO(&cpus);
-		//for (int j = 0; j < 2; j++)
-		CPU_SET(cpu_id, &cpus);
-		//param.sched_priority = newprio;
-
-		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-		//pthread_attr_setschedparam (&attr, &param);
-
-		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
-			handle_error("Error on ss_thread create");
-		}
 		//after SS thread we start others threads
 
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
