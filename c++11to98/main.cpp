@@ -136,14 +136,10 @@ void * ss_module(void * arg) {
 	int newprio = 99;
     sched_param param; 
     param.sched_priority = newprio;   
-    int pid = getpid();
-    cout << "pid " << pid << endl;
-    cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;    
+    int pid = getpid();   
     if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
         perror("on setscheduler: ");
     } 
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;
     
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
@@ -158,13 +154,10 @@ void * ss_module(void * arg) {
 
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
-		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
-		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-
-			sq->send_message(ss_channel);
-			sq->send_message(ss_channel2);
-			count_messages_ss++;
-		}
+	    sq->send_message(ss_channel);
+	    sq->send_message(ss_channel2);
+	    count_messages_ss++;
+		
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -179,7 +172,7 @@ void * ss_module(void * arg) {
 		    //usleep(0);
 		}
 	}
-    global_sync_flag = 1;
+    sleep(2);
 	cout << "AFTER SS END WORK" << endl;
     delete(sq);
 	cout << count_messages_ss << endl;
