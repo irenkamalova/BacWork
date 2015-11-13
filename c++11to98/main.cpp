@@ -1,6 +1,5 @@
 #include <iostream>
 #include "Module.h"
-#include "QueueAndSockets.h"
 #include <vector>
 #include <cstring>
 #include <fstream>
@@ -11,7 +10,6 @@
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
 #include <sched.h>
-#include <map>
 
 #define BILLION 1000000000L
 
@@ -29,7 +27,7 @@ void wait_n_microsec(int n) {
     long long int unsigned result;
     for (l = 0; l < n; l++) {
 		result = 1;
-		for (k = 1; k <= 80; k++) {
+		for (k = 1; k <= 225; k++) {
 			result = result * k;
 		}
 	}
@@ -42,6 +40,7 @@ string s = "modules.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
+static const short THREAD_SLEEP = 10;
 int array_for_file[20][70000];
 uint64_t array_of_max_queue[20];
 uint64_t array_of_queue[20][20000];
@@ -134,19 +133,18 @@ struct sender_socket : sender {
 
 void * ss_module(void * arg) {
 	//starttime = timestamp();
-	
 	int newprio = 99;
     sched_param param; 
     param.sched_priority = newprio;   
     int pid = getpid();
     cout << "pid " << pid << endl;
     cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;
-    
+    cout <<  "sched: " << sched_getscheduler(pid) << endl;    
     if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
         perror("on setscheduler: ");
     } 
     cout <<  "sched: " << sched_getscheduler(pid) << endl;
+    
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
@@ -327,7 +325,7 @@ int main(int argc, char *argv[]) {
 			}
 			cout << endl;
 		}
-
+//*/
 		cout << "finished" << endl;
 
 	} else {
@@ -368,7 +366,7 @@ void * module (void * arg) {
 
 
 
-	while(global_sync_flag == 0) {
+	while( (timestamp() - starttime) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
 
@@ -412,7 +410,7 @@ void * module (void * arg) {
 				if(long_of_messages_queue > 1) {
 			    	array_of_queue[vals->get_number()][recv_index] = long_of_messages_queue;
 			    	recv_index++;
-			        //array_of_queue[vals->get_number()][recv_index] = timestamp();
+			        array_of_queue[vals->get_number()][recv_index] = timestamp();
 			    	recv_index++;
 			    }
 			}
