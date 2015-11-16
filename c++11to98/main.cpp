@@ -36,14 +36,17 @@ void wait_n_microsec(int n) {
 uint64_t starttime;
 
 string str = "messages_result.txt";
-string s = "modules.txt";
+string s = "modules1.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
 static const short THREAD_SLEEP = 10;
-int array_for_file[20][70000];
-uint64_t array_of_max_queue[20];
-uint64_t array_of_queue[20][20000];
+static const short NUMBER_OF_QUEUE_CH = 50;
+static const short NUMBER_OF_MODULES = 30;
+static const int LENGTH_OF_ARRAY = 100;
+int array_for_file[NUMBER_OF_MODULES][70000];
+uint64_t array_of_max_queue[100];
+uint64_t array_of_queue[NUMBER_OF_MODULES][20000];
 //vector<map<int, long long int> >
 
 vector<Module> parser();
@@ -51,11 +54,8 @@ int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
-vector<pair<int*, int*> > pairs(20);
-int datas[40][50];
-const int LENGTH_OF_ARRAY = 100;
-
-short global_sync_flag = 0;
+vector<pair<int*, int*> > pairs(NUMBER_OF_QUEUE_CH);
+int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
 
 void write_into_file(Module * vals, ofstream *fout);
 
@@ -132,23 +132,12 @@ struct sender_socket : sender {
 };
 
 void * ss_module(void * arg) {
-	//starttime = timestamp();
-	int newprio = 99;
-    sched_param param; 
-    param.sched_priority = newprio;   
-    int pid = getpid();
-    cout << "pid " << pid << endl;
-    cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;    
-    if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
-        perror("on setscheduler: ");
-    } 
-    cout <<  "sched: " << sched_getscheduler(pid) << endl;
-    
+	//starttime = timestamp();    
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
 	int ss_channel = 0;
 	int ss_channel2 = 7;
+	int ss_channel3 = 18;
 	int propusk = 0;
 	int index = 0;
 	int k = 0;
@@ -160,7 +149,7 @@ void * ss_module(void * arg) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-
+			sq->send_message(ss_channel3);
 			sq->send_message(ss_channel);
 			sq->send_message(ss_channel2);
 			count_messages_ss++;
@@ -179,7 +168,6 @@ void * ss_module(void * arg) {
 		    //usleep(0);
 		}
 	}
-    global_sync_flag = 1;
 	cout << "AFTER SS END WORK" << endl;
     delete(sq);
 	cout << count_messages_ss << endl;
@@ -241,22 +229,13 @@ int main(int argc, char *argv[]) {
 		pthread_attr_init(&attr);
 		cpu_set_t cpus;
 		int cpu_id = 0;
+		CPU_ZERO(&cpus);
+		CPU_SET(cpu_id, &cpus);
+		//param.sched_priority = newprio;
 
 		vector<pthread_t> thids;
 		starttime = timestamp();
-		for(int i = 0; i < my_modules.size(); i++) {
-			thids.push_back(thread);
-			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
-				perror("Error on thread create");
-			}
-		}
 
-
-
-		CPU_ZERO(&cpus);
-		//for (int j = 0; j < 2; j++)
-		CPU_SET(cpu_id, &cpus);
-		//param.sched_priority = newprio;
 
 		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
 		//pthread_attr_setschedparam (&attr, &param);
@@ -265,7 +244,12 @@ int main(int argc, char *argv[]) {
 			handle_error("Error on ss_thread create");
 		}
 		//after SS thread we start others threads
-
+		for(int i = 0; i < my_modules.size(); i++) {
+			thids.push_back(thread);
+			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
+				perror("Error on thread create");
+			}
+		}
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         pthread_join(ss_thread, (void **) NULL);
 
