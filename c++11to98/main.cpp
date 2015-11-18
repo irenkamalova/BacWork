@@ -36,14 +36,14 @@ void wait_n_microsec(int n) {
 uint64_t starttime;
 
 string str = "messages_result.txt";
-string s = "modules1.txt";
+string s = "modules_25_3.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
 static const short THREAD_SLEEP = 10;
 static const short NUMBER_OF_QUEUE_CH = 50;
 static const short NUMBER_OF_MODULES = 30;
-static const int LENGTH_OF_ARRAY = 100;
+static const int LENGTH_OF_ARRAY = 1500;
 int array_for_file[NUMBER_OF_MODULES][70000];
 uint64_t array_of_max_queue[100];
 uint64_t array_of_queue[NUMBER_OF_MODULES][20000];
@@ -61,12 +61,12 @@ void write_into_file(Module * vals, ofstream *fout);
 
 void receive_message(int& number_of_current_pair) {
 
-	if(pairs[number_of_current_pair].second != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
+	if(pairs[number_of_current_pair].second != &datas[number_of_current_pair][LENGTH_OF_ARRAY - 1]) {
 		pairs[number_of_current_pair].second = pairs[number_of_current_pair].second + 1;
 	}
 	else {
 		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
-		cout << "переполнение!" << endl;
+		//cout << "переполнение!" << endl;
     }
 }
 struct receiver {
@@ -137,7 +137,7 @@ void * ss_module(void * arg) {
 	int count_messages_ss = 0;
 	int ss_channel = 0;
 	int ss_channel2 = 7;
-	int ss_channel3 = 18;
+	//int ss_channel3 = 18;
 	int propusk = 0;
 	int index = 0;
 	int k = 0;
@@ -149,7 +149,7 @@ void * ss_module(void * arg) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
 		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			sq->send_message(ss_channel3);
+			//sq->send_message(ss_channel3);
 			sq->send_message(ss_channel);
 			sq->send_message(ss_channel2);
 			count_messages_ss++;
@@ -246,6 +246,15 @@ int main(int argc, char *argv[]) {
 		//after SS thread we start others threads
 		for(int i = 0; i < my_modules.size(); i++) {
 			thids.push_back(thread);
+            if( my_modules[i].get_affectation()) {
+                cpu_id++;
+                CPU_ZERO(&cpus);
+        		CPU_SET(cpu_id, &cpus);
+                pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+			    if (pthread_create(&thids[i], &attr, module, &my_modules[i])) {
+				    perror("Error on thread create");
+			    }                
+            }
 			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
 				perror("Error on thread create");
 			}
@@ -300,13 +309,14 @@ int main(int argc, char *argv[]) {
 		for(int i = 0; i < my_modules.size(); i++) {
 			cout << modules[i].get_name() << endl;
 			int k = 0;
-			while(array_of_queue[modules[i].get_number()][k] != 300)
+			while(array_of_queue[my_modules[i].get_number()][k] != 300)
 			{   			   
-				    cout << array_of_queue[modules[i].get_number()][k] << " ";
+				    cout << array_of_queue[my_modules[i].get_number()][k] << " ";
 				    k++;
-				    cout << array_of_queue[modules[i].get_number()][k] << endl;
+				    cout << array_of_queue[my_modules[i].get_number()][k] << endl;
 				    k++;
 			}
+            cout << k/2 << endl;
 			cout << endl;
 		}
 //*/
