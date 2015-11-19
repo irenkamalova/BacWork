@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-const int SIZE = 100;
+const int SIZE = 1024;
 using namespace std;
 
 class Module {

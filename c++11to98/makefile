@@ -1,6 +1,7 @@
 CFLAGS=-std=c++98
 LDFLAGS=-pthread 
 PFLAGS=-Wl,--no-as-needed
+NFLAGS=-pg
 
 SOURCES=main.cpp Module.cpp
 
@@ -10,7 +11,7 @@ EXECUTABLE=simulator
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) 
-	$(CXX) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS) $(PFLAGS)
+	$(CXX) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS) $(PFLAGS) $(NFLAGS)
 
 $(OBJECTS): $(SOURCES)
 	$(CXX) $(CFLAGS) $< -c $@ $(LDFLAGS)

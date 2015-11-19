@@ -8,7 +8,7 @@
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
-#include <sched.h>
+#include <map>
 
 #define BILLION 1000000000L
 
@@ -35,7 +35,10 @@ void wait_n_microsec(int n) {
 uint64_t starttime;
 
 string str = "messages_result.txt";
-string s = "modules_25_3.txt";
+string s1 = "/home/newuser/ClionProjects/BacWork/c++11to98/file1.txt";
+string s2 = "/home/newuser/ClionProjects/BacWork/c++11to98/file2.txt";
+string s3 = "/home/newuser/ClionProjects/BacWork/c++11to98/file3.txt";
+const int PORT = 60000;
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -48,7 +51,10 @@ uint64_t array_of_max_queue[100];
 uint64_t array_of_queue[NUMBER_OF_MODULES][20000];
 //vector<map<int, long long int> >
 
-vector<Module> parser();
+vector<Module> parser1();
+map<string, int> parser2();
+map<int, string> parser3();
+
 int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
@@ -177,13 +183,52 @@ void * ss_module(void * arg) {
 	cout << endl;
 }
 
-
 int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 	
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser();
+		vector<Module> modules = parser1();
+		map<string, int> module_machine = parser2();
+		map<int, string> machine_address = parser3();
+		int port = PORT;
+
+		for(int i = 0; i < modules.size(); i++) {
+			modules[i].set_machine(module_machine[modules[i].get_name()]);
+			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
+		}
+		string check1, check2, check3, check4;
+		for(int i = 0; i < modules.size(); i++) {
+			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
+				modules[i].message_output_array[i_m];
+				for(int j = i + 1; j < modules.size(); j++) {
+					for(int j_m = 0; j_m < modules[j].get_nti(); j_m++) {
+						check1 = modules[i].message_output_array[i_m].name;
+						check2 =  modules[j].message_input_array[j_m].name;
+						check3 = modules[i].message_output_array[i_m].name_to;
+						check4 = modules[j].get_name();
+						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
+							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
+							if(modules[i].get_machine() == modules[j].get_machine()) {
+								modules[i].message_output_array[i_m].connection_type = 0;
+								modules[j].message_input_array[j_m].connection_type = 0;
+								pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+								modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+								modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
+							}
+							else {
+								modules[i].message_output_array[i_m].connection_type = 1;
+								modules[j].message_input_array[j_m].connection_type = 1;
+								modules[j].set_port(port++);
+								modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+								modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+								modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
+							}
+						}
+					}
+				}
+			}
+		}
 		 //modules for this machine
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
@@ -191,6 +236,12 @@ int main(int argc, char *argv[]) {
 				my_modules.push_back(modules[i]);
 			}
 		}
+
+		//IF there somebody with SS signal
+		for(int i = 0; i < my_modules.size(); i++) {
+
+		}
+
 
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
