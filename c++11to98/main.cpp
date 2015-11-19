@@ -59,7 +59,7 @@ int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
-vector<pair<int*, int*> > pairs(NUMBER_OF_QUEUE_CH);
+vector<pair<int*, int*> > pairs;
 int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
 
 void write_into_file(Module * vals, ofstream *fout);
@@ -136,13 +136,12 @@ struct sender_socket : sender {
 	}
 };
 
+vector<int> ss_channels;
+
 void * ss_module(void * arg) {
 	//starttime = timestamp();    
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
-	int ss_channel = 0;
-	int ss_channel2 = 7;
-	//int ss_channel3 = 18;
 	int propusk = 0;
 	int index = 0;
 	int k = 0;
@@ -153,12 +152,10 @@ void * ss_module(void * arg) {
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
 		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
-		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			//sq->send_message(ss_channel3);
-			sq->send_message(ss_channel);
-			sq->send_message(ss_channel2);
-			count_messages_ss++;
+		for(int i = 0; i < ss_channels.size(); i++) {
+			sq->send_message(ss_channels[i]);
 		}
+		count_messages_ss++;
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -197,16 +194,13 @@ int main(int argc, char *argv[]) {
 			modules[i].set_machine(module_machine[modules[i].get_name()]);
 			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
 		}
-		string check1, check2, check3, check4;
+
 		for(int i = 0; i < modules.size(); i++) {
 			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
 				modules[i].message_output_array[i_m];
 				for(int j = i + 1; j < modules.size(); j++) {
 					for(int j_m = 0; j_m < modules[j].get_nti(); j_m++) {
-						check1 = modules[i].message_output_array[i_m].name;
-						check2 =  modules[j].message_input_array[j_m].name;
-						check3 = modules[i].message_output_array[i_m].name_to;
-						check4 = modules[j].get_name();
+
 						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
 							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
 							if(modules[i].get_machine() == modules[j].get_machine()) {
@@ -239,7 +233,14 @@ int main(int argc, char *argv[]) {
 
 		//IF there somebody with SS signal
 		for(int i = 0; i < my_modules.size(); i++) {
-
+			for(int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
+				if(my_modules[i].message_input_array[i_m].name == "СС") {
+					pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+					ss_channels.push_back(pairs.size() - 1);
+					my_modules[i].message_input_array[i_m].connection_type = 0;
+					my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+				}
+			}
 		}
 
 
@@ -272,6 +273,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 		cout << "after join" << endl;
+
 
 		//initialisation
 		pthread_t ss_thread;
@@ -357,7 +359,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		for(int i = 0; i < my_modules.size(); i++) {
-			cout << modules[i].get_name() << endl;
+			cout << my_modules[i].get_name() << endl;
 			int k = 0;
 			while(array_of_queue[my_modules[i].get_number()][k] != 300)
 			{   			   
@@ -508,7 +510,7 @@ void * module (void * arg) {
 
 	//cout << recv_index << '\t' << send_index << endl;
 	//if(!vals->get_affectation()) //if there no affectation
-		sleep(5);
+		sleep(1);
 
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
@@ -522,12 +524,48 @@ void * module (void * arg) {
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	array_of_queue[vals->get_number()][recv_index] = 300;
-	//cout << vals->get_name() << " finished " << endl;
+	cout << vals->get_name() << " finished " << endl;
 }
 
-vector<Module> parser() {
-	char * cstr = new char [s.length()+1];
-	strcpy(cstr, s.c_str());
+map<int, string> parser3() {
+	map<int, string> machine_address;
+	char * cstr = new char [s3.length()+1];
+	strcpy(cstr, s3.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string address;
+	int machine = 0;
+	while (fin >> buff) {
+		fin >> buff;
+		machine = atoi(buff);
+		fin >> buff;
+		address = buff;
+		machine_address[machine] = address;
+	}
+	return machine_address;
+
+};
+
+map<string, int> parser2() {
+	map<string, int> module_machine;
+	char * cstr = new char [s2.length()+1];
+	strcpy(cstr, s2.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string module;
+	int machine;
+	while (fin >> buff) {
+		module = buff;
+		fin >> machine;
+		module_machine[module] = machine;
+	}
+	return module_machine;
+}
+
+
+vector<Module> parser1() {
+	char * cstr = new char [s1.length()+1];
+	strcpy(cstr, s1.c_str());
 	ifstream fin(cstr);
 	char buff[SIZE];
 	int i = 0;//number of modules
@@ -548,26 +586,14 @@ vector<Module> parser() {
 			number_of_mes_output = 0; // number of output data
 			vals[i].set_nto(number_of_mes_output);
 
-			int machine;
-			fin >> machine;
-			vals[i].set_machine(machine);
-
-			int port;
-			fin >> port;
-			vals[i].set_port(port);
-
-			bool aff;
-			fin >> aff;
-			vals[i].set_affectation(aff);
+			vals[i].set_port(0);
+			//bool aff;
+			//fin >> aff;
+			//vals[i].set_affectation(aff);
 
 			double amount;
 			fin >> amount;
 			vals[i].set_data_amount(amount);
-
-			string address;
-			fin >> address;
-			vals[i].set_my_ip_address(address);
-
 		}
 		fin >> buff;
 		if (strcmp(buff, "-") != 0) {
@@ -580,28 +606,9 @@ vector<Module> parser() {
 			fin >> time_hand;
 			m_i.time_hand = time_hand;
 
-			fin >> buff;
-			m_i.name_from = buff;
-
 			bool parameter;
 			fin >> parameter;
 			m_i.parameter = parameter;
-
-			bool connection_type;
-			fin >> connection_type;
-			m_i.connection_type = connection_type;
-
-			if(!connection_type) { //it means that connection type = queue
-				int channel_number;
-				fin >> channel_number;
-				m_i.channel_from = channel_number;
-
-			}
-			else { 	 			  //connection type = socket
-				string ip_address;
-				fin >> ip_address;
-				m_i.ip_address_from = ip_address;
-			}
 
 			vals[i].set_message_input(m_i, vals[i].get_nti());
 			vals[i].inc_nti();
@@ -617,27 +624,10 @@ vector<Module> parser() {
 			fin >> time_form;
 			m_o.time_form = time_form;
 
+
+
 			fin >> buff;
 			m_o.name_to = buff;
-
-			bool connection_type;
-			fin >> connection_type;
-			m_o.connection_type = connection_type;
-
-			if(!connection_type) { //it means that connection type = queue
-				int channel_number;
-				fin >> channel_number;
-				m_o.channel_to = channel_number;
-			}
-			else { // type = socket
-				int port_number;
-				fin >> port_number;
-				m_o.port_to = port_number;
-
-				string ip_address;
-				fin >> ip_address;
-				m_o.ip_address_to = ip_address;
-			}
 
 			vals[i].set_message_output(m_o, vals[i].get_nto());
 			vals[i].inc_nto();
