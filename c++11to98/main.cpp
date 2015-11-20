@@ -150,19 +150,15 @@ void * ss_module(void * arg) {
 	int k = 0;
 	int array_if_indexes[5000];
 	uint64_t t_i = starttime;
-	cout << ss_channels.size() << endl;
-	for(int i = 0; i < ss_channels.size(); i++) {
-		cout << ss_channels[i] << endl;
-	}
 
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
 
 		for(int i = 0; i < ss_channels.size(); i++) {
 			sq->send_message(ss_channels[i]);
-			count_messages_ss++;
-		}
 
+		}
+        count_messages_ss++;
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -242,7 +238,43 @@ int main(int argc, char *argv[]) {
 				my_modules.push_back(modules[i]);
 			}
 		}
+		if(argv[1]) { //if on SS module on this machine
+			for (int i = 0; i < my_modules.size(); i++) {
+				for (int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
+					if (my_modules[i].message_input_array[i_m].name == "СС") {
+						//if (my_modules[i].get_machine() == my_machine) {
+						pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+						ss_channels.push_back(pairs.size() - 1);
+						my_modules[i].message_input_array[i_m].connection_type = 0;
+						my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+						//}
+					}
+				}
+			}
+		}
 
+		char * cstr = new char [str.length()+1];
+		strcpy(cstr, str.c_str());
+		ofstream fout(cstr);
+		//it = my_modules;
+		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
+			++it) {
+			fout << it->get_name() << endl;
+			for(int i = 0; i < it->get_nti(); i++) {
+				fout << it->message_input_array[i].name << "	" <<
+				it->message_input_array[i].time_hand << "	" <<
+				it->message_input_array[i].connection_type << "		" <<
+				it->message_input_array[i].channel_from << "		" <<
+				it->message_input_array[i].parameter << endl;
+			}
+			for(int i = 0; i < it->get_nto(); i++) {
+				fout << it->message_output_array[i].name << "	" <<
+				it->message_output_array[i].time_form << "	" <<
+				it->message_output_array[i].connection_type << "		" <<
+				it->message_output_array[i].channel_to << endl;
+			}
+            fout << endl;
+		}
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
 		pthread_t thread;
@@ -281,24 +313,10 @@ int main(int argc, char *argv[]) {
 		int cpu_id = 0;
 		CPU_ZERO(&cpus);
 		CPU_SET(cpu_id, &cpus);
-		int p = 1;
+
 		//param.sched_priority = newprio;
-		if(argv[1]) { //if on SS module on this machine
-			for (int i = 0; i < my_modules.size(); i++) {
-				for (int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
-					if (my_modules[i].message_input_array[i_m].name == "СС") {
-						//if (my_modules[i].get_machine() == my_machine) {
-							pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-							ss_channels.push_back(pairs.size() - 1);
-							cout << "did" << pairs.size() - 1 << endl;
-							my_modules[i].message_input_array[i_m].connection_type = 0;
-							my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
-							p = 8;
-						//}
-					}
-				}
-			}
-		}
+
+
 		vector<pthread_t> thids;
 		starttime = timestamp();
 		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
