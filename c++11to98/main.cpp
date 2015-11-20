@@ -73,7 +73,6 @@ void receive_message(int& number_of_current_pair) {
 	}
 	else {
 		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
-		cout << "переполнение!" << endl;
     }
 }
 struct receiver {
