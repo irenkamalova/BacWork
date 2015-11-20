@@ -9,7 +9,7 @@
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
 #include <sched.h>
-
+#include <map>
 #define BILLION 1000000000L
 
 #define handle_error(msg) \
@@ -32,10 +32,18 @@ void wait_n_microsec(int n) {
 	}
 }
 
+vector<Module> parser1();
+map<string, int> parser2();
+map<int, string> parser3();
+const int PORT = 60000;
+const int N_GRIDS = 20000; //! for information array about receiving and sending messages
 uint64_t starttime;
 
 string str = "messages_result.txt";
 string s = "modules.txt";
+string s1 = "/home/newuser/ClionProjects/BacWork/c++11to98/file1.txt";
+string s2 = "/home/newuser/ClionProjects/BacWork/c++11to98/file2.txt";
+string s3 = "/home/newuser/ClionProjects/BacWork/c++11to98/file3.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -45,7 +53,7 @@ static const short NUMBER_OF_MODULES = 30;
 static const int LENGTH_OF_ARRAY = 1500;
 int array_for_file[NUMBER_OF_MODULES][70000];
 uint64_t array_of_max_queue[100];
-uint64_t array_of_queue[NUMBER_OF_MODULES][20000];
+uint64_t array_of_queue[NUMBER_OF_MODULES][N_GRIDS];
 //vector<map<int, long long int> >
 
 vector<Module> parser();
@@ -53,7 +61,7 @@ int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
-vector<pair<int*, int*> > pairs(NUMBER_OF_QUEUE_CH);
+vector<pair<int*, int*> > pairs;
 int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
 vector<int> ss_channels;
 
@@ -65,7 +73,7 @@ void receive_message(int& number_of_current_pair) {
 	}
 	else {
 		pairs[number_of_current_pair].second = &datas[number_of_current_pair][0];
-		//cout << "переполнение!" << endl;
+		cout << "переполнение!" << endl;
     }
 }
 struct receiver {
@@ -110,8 +118,12 @@ struct sender {
 
 struct sender_queue : sender {
 	int send_message(int& number_of_current_pair) {
-		if(pairs[number_of_current_pair].first != &datas[number_of_current_pair][LENGTH_OF_ARRAY]) {
+		//cout << "send in " << number_of_current_pair << " first is " <<
+		//		pairs[number_of_current_pair].first << endl;
+		if(pairs[number_of_current_pair].first != &datas[number_of_current_pair][LENGTH_OF_ARRAY - 1]) {
 			pairs[number_of_current_pair].first = pairs[number_of_current_pair].first + 1;
+		//	cout << "send in " << number_of_current_pair << " first now is " <<
+		//	pairs[number_of_current_pair].first << endl;
 		}
 		else
 			pairs[number_of_current_pair].first = &datas[number_of_current_pair][0];
@@ -139,6 +151,7 @@ void * ss_module(void * arg) {
 	int k = 0;
 	int array_if_indexes[5000];
 	uint64_t t_i = starttime;
+	cout << ss_channels.size() << endl;
 	for(int i = 0; i < ss_channels.size(); i++) {
 		cout << ss_channels[i] << endl;
 	}
@@ -148,8 +161,9 @@ void * ss_module(void * arg) {
 
 		for(int i = 0; i < ss_channels.size(); i++) {
 			sq->send_message(ss_channels[i]);
+			count_messages_ss++;
 		}
-		count_messages_ss++;
+
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -177,8 +191,51 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 3) {
 
+		for(int k = 0; k < NUMBER_OF_MODULES; k++)
+			for(int j = 0; j < N_GRIDS; j++)
+				array_for_file[k][j] = 0;
+
+
 		int my_machine = atoi(argv[2]);
-		vector<Module> modules = parser();
+
+		vector<Module> modules = parser1();
+		map<string, int> module_machine = parser2();
+		map<int, string> machine_address = parser3();
+		int port = PORT;
+
+		for(int i = 0; i < modules.size(); i++) {
+			modules[i].set_machine(module_machine[modules[i].get_name()]);
+			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
+		}
+
+		for(int i = 0; i < modules.size(); i++) {
+			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
+				modules[i].message_output_array[i_m];
+				for(int j = i + 1; j < modules.size(); j++) {
+					for(int j_m = 0; j_m < modules[j].get_nti(); j_m++) {
+
+						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
+							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
+							if(modules[i].get_machine() == modules[j].get_machine()) {
+								modules[i].message_output_array[i_m].connection_type = 0;
+								modules[j].message_input_array[j_m].connection_type = 0;
+								pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+								modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+								modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
+							}
+							else {
+								modules[i].message_output_array[i_m].connection_type = 1;
+								modules[j].message_input_array[j_m].connection_type = 1;
+								modules[j].set_port(port++);
+								modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+								modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+								modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
+							}
+						}
+					}
+				}
+			}
+		}
 		 //modules for this machine
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
@@ -228,17 +285,17 @@ int main(int argc, char *argv[]) {
 		int p = 1;
 		//param.sched_priority = newprio;
 		if(argv[1]) { //if on SS module on this machine
-			for (int i = 0; i < modules.size(); i++) {
-				for (int i_m = 0; i_m < modules[i].get_nti(); i_m++) {
-					if (modules[i].message_input_array[i_m].name == "СС") {
-						if (modules[i].get_machine() == my_machine) {
-							//pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-							ss_channels.push_back(p - 1);
-							cout << "do" << p - 1 << endl;
-							//modules[i].message_input_array[i_m].connection_type = 0;
-							//modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+			for (int i = 0; i < my_modules.size(); i++) {
+				for (int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
+					if (my_modules[i].message_input_array[i_m].name == "СС") {
+						//if (my_modules[i].get_machine() == my_machine) {
+							pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+							ss_channels.push_back(pairs.size() - 1);
+							cout << "did" << pairs.size() - 1 << endl;
+							my_modules[i].message_input_array[i_m].connection_type = 0;
+							my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
 							p = 8;
-						}
+						//}
 					}
 				}
 			}
@@ -365,7 +422,7 @@ void * module (void * arg) {
 	send_object_q = new sender_queue;
 	send_object_s = new sender_socket;
 	//uint64_t delay = timestamp() - starttime;
-
+	int received = 0;
 
 
 	while( (timestamp() - starttime) < TIME) {
@@ -388,7 +445,8 @@ void * module (void * arg) {
 
 				long_of_messages_queue = 0;
 				while (recv_object->there_message(it->channel_from)) {
-
+					//received++;
+					//cout << "received mess N " << received << endl;
 					long_of_messages_queue++;
 					if (max_long_of_messages_queue < long_of_messages_queue)
 						max_long_of_messages_queue = long_of_messages_queue;
@@ -466,7 +524,7 @@ void * module (void * arg) {
 
 	//cout << recv_index << '\t' << send_index << endl;
 	//if(!vals->get_affectation()) //if there no affectation
-		sleep(5);
+		sleep(1);
 
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
@@ -669,3 +727,114 @@ void* create_sockets_for_receiving(void *arg) {
 	}
 }
 
+map<int, string> parser3() {
+	map<int, string> machine_address;
+	char * cstr = new char [s3.length()+1];
+	strcpy(cstr, s3.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string address;
+	int machine = 0;
+	while (fin >> buff) {
+		fin >> buff;
+		machine = atoi(buff);
+		fin >> buff;
+		address = buff;
+		machine_address[machine] = address;
+	}
+	return machine_address;
+
+};
+
+map<string, int> parser2() {
+	map<string, int> module_machine;
+	char * cstr = new char [s2.length()+1];
+	strcpy(cstr, s2.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string module;
+	int machine;
+	while (fin >> buff) {
+		module = buff;
+		fin >> machine;
+		module_machine[module] = machine;
+	}
+	return module_machine;
+}
+
+
+vector<Module> parser1() {
+	char * cstr = new char [s1.length()+1];
+	strcpy(cstr, s1.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	int i = 0;//number of modules
+	int number_of_mes_input;
+	int number_of_mes_output;
+
+	vector<Module> vals;
+	while (fin >> buff) {
+		if (strcmp(buff, "-") == 0) {
+			i--;
+		} else {
+			Module *module = new Module;
+			module->set_name(buff);
+			vals.push_back(*module);
+			vals[i].set_number(i);
+			number_of_mes_input = 0; // number of input data
+			vals[i].set_nti(number_of_mes_input);
+			number_of_mes_output = 0; // number of output data
+			vals[i].set_nto(number_of_mes_output);
+
+			vals[i].set_port(0);
+			//bool aff;
+			//fin >> aff;
+			vals[i].set_affectation(0);
+
+			double amount;
+			fin >> amount;
+			vals[i].set_data_amount(amount);
+		}
+		fin >> buff;
+		if (strcmp(buff, "-") != 0) {
+
+			Module::message_input m_i;
+
+			m_i.name = buff;
+
+			int time_hand;
+			fin >> time_hand;
+			m_i.time_hand = time_hand;
+
+			bool parameter;
+			fin >> parameter;
+			m_i.parameter = parameter;
+
+			vals[i].set_message_input(m_i, vals[i].get_nti());
+			vals[i].inc_nti();
+		}
+		fin >> buff;
+		if (strcmp(buff, "-") != 0) {
+
+			Module::message_output m_o;
+
+			m_o.name = buff;
+
+			int time_form;
+			fin >> time_form;
+			m_o.time_form = time_form;
+
+
+
+			fin >> buff;
+			m_o.name_to = buff;
+
+			vals[i].set_message_output(m_o, vals[i].get_nto());
+			vals[i].inc_nto();
+		}
+		i++;
+	}
+
+	fin.close();
+	return vals;
+}
