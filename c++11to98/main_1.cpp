@@ -8,7 +8,7 @@
 #include <time.h> 	 //clock_gettime()
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
-#include <sched.h>
+#include <map>
 
 #define BILLION 1000000000L
 
@@ -34,26 +34,34 @@ void wait_n_microsec(int n) {
 
 uint64_t starttime;
 
-string str = "messages_result.txt";
 string s = "modules.txt";
+string str = "/home/newuser/ClionProjects/BacWork/c++11to98/modules_check.txt";
+string s1 = "/home/newuser/ClionProjects/BacWork/c++11to98/file1.txt";
+string s2 = "/home/newuser/ClionProjects/BacWork/c++11to98/file2.txt";
+string s3 = "/home/newuser/ClionProjects/BacWork/c++11to98/file3.txt";
+const int PORT = 60000;
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
 static const short THREAD_SLEEP = 10;
 static const short NUMBER_OF_QUEUE_CH = 50;
 static const short NUMBER_OF_MODULES = 30;
-static const int LENGTH_OF_ARRAY = 1500;
+static const int LENGTH_OF_ARRAY = 50;
 int array_for_file[NUMBER_OF_MODULES][70000];
 uint64_t array_of_max_queue[100];
 uint64_t array_of_queue[NUMBER_OF_MODULES][20000];
 //vector<map<int, long long int> >
 
 vector<Module> parser();
+vector<Module> parser1();
+map<string, int> parser2();
+map<int, string> parser3();
+
 int create_socket(int *port, string *ip_address);
 int create_sock_for_receiving(int *port, string *ip_address);
 void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
-vector<pair<int*, int*> > pairs(NUMBER_OF_QUEUE_CH);
+vector<pair<int*, int*> > pairs(20);
 int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
 
 void write_into_file(Module * vals, ofstream *fout);
@@ -130,29 +138,28 @@ struct sender_socket : sender {
 	}
 };
 
+vector<int> ss_channels;
+
 void * ss_module(void * arg) {
 	//starttime = timestamp();    
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
-	int ss_channel = 0;
-	int ss_channel2 = 7;
-	//int ss_channel3 = 18;
 	int propusk = 0;
 	int index = 0;
 	int k = 0;
 	int array_if_indexes[1000];
 	uint64_t t_i = starttime;
-	
+	int ch1 = 0;
+	int ch2 = 7;
 
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
-		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
-		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			//sq->send_message(ss_channel3);
-			sq->send_message(ss_channel);
-			sq->send_message(ss_channel2);
-			count_messages_ss++;
-		}
+		//for(int i = 0; i < ss_channels.size(); i++) {
+
+			sq->send_message(ch1);
+			sq->send_message(ch2);
+		//}
+		count_messages_ss++;
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -177,21 +184,95 @@ void * ss_module(void * arg) {
 	cout << endl;
 }
 
-
 int main(int argc, char *argv[]) {
 	
 	if (argc == 2) {
 	
 		int my_machine = atoi(argv[1]);
-		vector<Module> modules = parser();
+/*		vector<Module> modules = parser1();
+		map<string, int> module_machine = parser2();
+		map<int, string> machine_address = parser3();
+		int port = PORT;
+
+		for(int i = 0; i < modules.size(); i++) {
+			modules[i].set_machine(module_machine[modules[i].get_name()]);
+			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
+		}
+
+		for(int i = 0; i < modules.size(); i++) {
+			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
+				modules[i].message_output_array[i_m];
+				for(int j = i + 1; j < modules.size(); j++) {
+					for(int j_m = 0; j_m < modules[j].get_nti(); j_m++) {
+
+						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
+							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
+							if(modules[i].get_machine() == modules[j].get_machine()) {
+								modules[i].message_output_array[i_m].connection_type = 0;
+								modules[j].message_input_array[j_m].connection_type = 0;
+								pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+								modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+								modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
+							}
+							else {
+								modules[i].message_output_array[i_m].connection_type = 1;
+								modules[j].message_input_array[j_m].connection_type = 1;
+								modules[j].set_port(port++);
+								modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+								modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+								modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
+							}
+						}
+					}
+				}
+			}
+		}*/
 		 //modules for this machine
+		vector<Module> modules = parser();
+
 		vector<Module> my_modules;
 		for(int i = 0; i < modules.size(); i++) {
 			if(modules[i].get_machine() == my_machine) {
 				my_modules.push_back(modules[i]);
 			}
 		}
+		/*
+		//IF there somebody with SS signal
+		for(int i = 0; i < my_modules.size(); i++) {
+			for(int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
+				if(my_modules[i].message_input_array[i_m].name == "СС") {
+					pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+					ss_channels.push_back(pairs.size() - 1);
+					cout << pairs.size() - 1 << endl;
+					my_modules[i].message_input_array[i_m].connection_type = 0;
+					my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+				}
+			}
+		}
+		*/
+		//cout << "!!!" << ss_channels[0] << endl;
+		char * cstr = new char [str.length()+1];
+		strcpy(cstr, str.c_str());
+		ofstream fout(cstr);
+		//it = my_modules;
+		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
+			++it) {
+			fout << it->get_name() << endl;
+			for(int i = 0; i < it->get_nti(); i++) {
+				fout << it->message_input_array[i].name << "	" <<
+						it->message_input_array[i].time_hand << "	" <<
+						it->message_input_array[i].connection_type << "		" <<
+						it->message_input_array[i].channel_from << "		" <<
+						it->message_input_array[i].parameter << endl;
+			}
+			for(int i = 0; i < it->get_nto(); i++) {
+				fout << it->message_output_array[i].name << "	" <<
+				it->message_output_array[i].time_form << "	" <<
+				it->message_output_array[i].connection_type << "		" <<
+				it->message_output_array[i].channel_to << endl;
+			}
 
+		}
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
 		pthread_t thread;
@@ -221,6 +302,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 		cout << "after join" << endl;
+
 
 		//initialisation
 		pthread_t ss_thread;
@@ -306,7 +388,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		for(int i = 0; i < my_modules.size(); i++) {
-			cout << modules[i].get_name() << endl;
+			cout << my_modules[i].get_name() << endl;
 			int k = 0;
 			while(array_of_queue[my_modules[i].get_number()][k] != 300)
 			{   			   
@@ -457,11 +539,12 @@ void * module (void * arg) {
 
 	//cout << recv_index << '\t' << send_index << endl;
 	//if(!vals->get_affectation()) //if there no affectation
-		sleep(5);
+		sleep(1);
 
 	//close sockets for receiving
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
 		if (it1->connection_type) {
+			cout << vals->get_name() << endl;
 			close(it1->channel_from);
 		}
 	}
@@ -471,7 +554,204 @@ void * module (void * arg) {
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	array_of_queue[vals->get_number()][recv_index] = 300;
-	//cout << vals->get_name() << " finished " << endl;
+	cout << vals->get_name() << " finished " << endl;
+}
+
+map<int, string> parser3() {
+	map<int, string> machine_address;
+	char * cstr = new char [s3.length()+1];
+	strcpy(cstr, s3.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string address;
+	int machine = 0;
+	while (fin >> buff) {
+		fin >> buff;
+		machine = atoi(buff);
+		fin >> buff;
+		address = buff;
+		machine_address[machine] = address;
+	}
+	return machine_address;
+
+};
+
+map<string, int> parser2() {
+	map<string, int> module_machine;
+	char * cstr = new char [s2.length()+1];
+	strcpy(cstr, s2.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string module;
+	int machine;
+	while (fin >> buff) {
+		module = buff;
+		fin >> machine;
+		module_machine[module] = machine;
+	}
+	return module_machine;
+}
+
+
+vector<Module> parser1() {
+	char * cstr = new char [s1.length()+1];
+	strcpy(cstr, s1.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	int i = 0;//number of modules
+	int number_of_mes_input;
+	int number_of_mes_output;
+
+	vector<Module> vals;
+	while (fin >> buff) {
+		if (strcmp(buff, "-") == 0) {
+			i--;
+		} else {
+			Module *module = new Module;
+			module->set_name(buff);
+			vals.push_back(*module);
+			vals[i].set_number(i);
+			number_of_mes_input = 0; // number of input data
+			vals[i].set_nti(number_of_mes_input);
+			number_of_mes_output = 0; // number of output data
+			vals[i].set_nto(number_of_mes_output);
+
+			vals[i].set_port(0);
+			//bool aff;
+			//fin >> aff;
+			vals[i].set_affectation(0);
+
+			double amount;
+			fin >> amount;
+			vals[i].set_data_amount(amount);
+		}
+		fin >> buff;
+		if (strcmp(buff, "-") != 0) {
+
+			Module::message_input m_i;
+
+			m_i.name = buff;
+
+			int time_hand;
+			fin >> time_hand;
+			m_i.time_hand = time_hand;
+
+			bool parameter;
+			fin >> parameter;
+			m_i.parameter = parameter;
+
+			vals[i].set_message_input(m_i, vals[i].get_nti());
+			vals[i].inc_nti();
+		}
+		fin >> buff;
+		if (strcmp(buff, "-") != 0) {
+
+			Module::message_output m_o;
+
+			m_o.name = buff;
+
+			int time_form;
+			fin >> time_form;
+			m_o.time_form = time_form;
+
+
+
+			fin >> buff;
+			m_o.name_to = buff;
+
+			vals[i].set_message_output(m_o, vals[i].get_nto());
+			vals[i].inc_nto();
+		}
+		i++;
+	}
+
+	fin.close();
+	return vals;
+}
+
+int create_socket(int *port, string *ip_address) {
+	int sock;
+	struct sockaddr_in addr;
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock < 0) {
+		handle_error("In function create_socket - socket:");
+	}
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(*port);
+	const char *cstr = (*ip_address).c_str();
+	addr.sin_addr.s_addr = inet_addr(cstr);
+	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+		cerr << *port << endl;
+		handle_error("In function create_socket - connect:");
+
+	}
+	return sock;
+}
+
+int create_sock_for_receiving(int *port, string *ip_address) {
+	int sock;
+	struct sockaddr_in addr;
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock < 0) {
+		handle_error("Socket create:");
+	}
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(*port);
+	const char *cstr = (*ip_address).c_str();
+	addr.sin_addr.s_addr = inet_addr(cstr);
+	if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+		cerr << *port << endl;
+		handle_error("Bind error:");
+	}
+	listen(sock, 50);
+	return sock;
+}
+
+void* create_sockets_for_receiving(void *arg) {
+	Module * vals = (Module *) arg;
+	vector<Module::message_input> m_i = vals->get_all_message_input();
+	int socket_for_receiving;
+	if(vals->get_port() != 0) {
+		int port = vals->get_port();
+		string address = vals->get_my_ip_address();
+		socket_for_receiving = create_sock_for_receiving(&port, &address);
+	}
+	int k = 0;
+	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+		if(it1->connection_type) { // type = socket
+			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
+			if (it1->channel_from < 0) {
+				cerr << vals->get_port() << endl;
+				handle_error("Accept error:");
+			}
+			vals->message_input_array[k].channel_from = it1->channel_from;
+			cout << vals->get_name() << " accepted " << it1->name_from << endl;
+		}
+		k++;
+	}
+}
+
+void write_into_file(Module * vals, ofstream * fout) {
+	int k = 0;
+	int count_send = 0;
+	int count_rec = 0;
+	while(array_for_file[vals->get_number()][k] != 0) {
+		if(array_for_file[vals->get_number()][k] == 1) {
+			k++;
+			count_send++;
+		}
+		else if(array_for_file[vals->get_number()][k] == 2) {
+			k++;
+			count_rec++;
+		}
+	}
+
+	if(count_rec != 0)
+		*fout << vals->get_name() << " получил сообщений " << count_rec
+		<< " цепочек " << count_rec / vals->get_nti() << endl;
+	if(count_send != 0)
+		*fout << vals->get_name() << " отправил сообщений " << count_send
+		<< " цепочек " << count_send / vals->get_nto() << endl;
 }
 
 vector<Module> parser() {
@@ -597,89 +877,3 @@ vector<Module> parser() {
 	fin.close();
 	return vals;
 }
-
-int create_socket(int *port, string *ip_address) {
-	int sock;
-	struct sockaddr_in addr;
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0) {
-		handle_error("In function create_socket - socket:");
-	}
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(*port);
-	const char *cstr = (*ip_address).c_str();
-	addr.sin_addr.s_addr = inet_addr(cstr);
-	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		cerr << *port << endl;
-		handle_error("In function create_socket - connect:");
-
-	}
-	return sock;
-}
-
-int create_sock_for_receiving(int *port, string *ip_address) {
-	int sock;
-	struct sockaddr_in addr;
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0) {
-		handle_error("Socket create:");
-	}
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(*port);
-	const char *cstr = (*ip_address).c_str();
-	addr.sin_addr.s_addr = inet_addr(cstr);
-	if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		cerr << *port << endl;
-		handle_error("Bind error:");
-	}
-	listen(sock, 50);
-	return sock;
-}
-
-void* create_sockets_for_receiving(void *arg) {
-	Module * vals = (Module *) arg;
-	vector<Module::message_input> m_i = vals->get_all_message_input();
-	int socket_for_receiving;
-	if(vals->get_port() != 0) {
-		int port = vals->get_port();
-		string address = vals->get_my_ip_address();
-		socket_for_receiving = create_sock_for_receiving(&port, &address);
-	}
-	int k = 0;
-	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
-		if(it1->connection_type) { // type = socket
-			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
-			if (it1->channel_from < 0) {
-				cerr << vals->get_port() << endl;
-				handle_error("Accept error:");
-			}
-			vals->message_input_array[k].channel_from = it1->channel_from;
-			cout << vals->get_name() << " accepted " << it1->name_from << endl;
-		}
-		k++;
-	}
-}
-
-void write_into_file(Module * vals, ofstream * fout) {
-	int k = 0;
-	int count_send = 0;
-	int count_rec = 0;
-	while(array_for_file[vals->get_number()][k] != 0) {
-		if(array_for_file[vals->get_number()][k] == 1) {
-			k++;
-			count_send++;
-		}
-		else if(array_for_file[vals->get_number()][k] == 2) {
-			k++;
-			count_rec++;
-		}
-	}
-
-	if(count_rec != 0)
-		*fout << vals->get_name() << " получил сообщений " << count_rec
-		<< " цепочек " << count_rec / vals->get_nti() << endl;
-	if(count_send != 0)
-		*fout << vals->get_name() << " отправил сообщений " << count_send
-		<< " цепочек " << count_send / vals->get_nto() << endl;
-}
-
