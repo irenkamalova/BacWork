@@ -55,8 +55,8 @@ void* create_sockets_for_receiving(void *arg);
 void* module(void * arg);
 vector<pair<int*, int*> > pairs(NUMBER_OF_QUEUE_CH);
 int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
+vector<int> ss_channels;
 
-void write_into_file(Module * vals, ofstream *fout);
 
 void receive_message(int& number_of_current_pair) {
 
@@ -131,28 +131,25 @@ struct sender_socket : sender {
 };
 
 void * ss_module(void * arg) {
-	//starttime = timestamp();    
+
 	sender_queue *sq = new sender_queue;
 	int count_messages_ss = 0;
-	int ss_channel = 0;
-	int ss_channel2 = 7;
-	//int ss_channel3 = 18;
 	int propusk = 0;
 	int index = 0;
 	int k = 0;
-	int array_if_indexes[1000];
+	int array_if_indexes[5000];
 	uint64_t t_i = starttime;
-	
+	for(int i = 0; i < ss_channels.size(); i++) {
+		cout << ss_channels[i] << endl;
+	}
 
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
-		int numeric_of_pair_for_output = 1; // but there can be more modules needs this signal
-		for(int i = 0; i < numeric_of_pair_for_output; i++) {
-			//sq->send_message(ss_channel3);
-			sq->send_message(ss_channel);
-			sq->send_message(ss_channel2);
-			count_messages_ss++;
+
+		for(int i = 0; i < ss_channels.size(); i++) {
+			sq->send_message(ss_channels[i]);
 		}
+		count_messages_ss++;
 		t_i = t_i + SLEEP_TIME;
 
 		if( (t_i < timestamp())  ) {
@@ -161,8 +158,6 @@ void * ss_module(void * arg) {
 			k++;
 		}
 
-		//long long int for_usleep = (t_i - (long long int)timestamp()) / 1000;
-		//uint64_t now_plus = timestamp() + for_usleep;
 		while(  (t_i  > timestamp() ) ) {
 		    //usleep(0);
 		}
@@ -180,9 +175,9 @@ void * ss_module(void * arg) {
 
 int main(int argc, char *argv[]) {
 	
-	if (argc == 2) {
-	
-		int my_machine = atoi(argv[1]);
+	if (argc == 3) {
+
+		int my_machine = atoi(argv[2]);
 		vector<Module> modules = parser();
 		 //modules for this machine
 		vector<Module> my_modules;
@@ -230,12 +225,26 @@ int main(int argc, char *argv[]) {
 		int cpu_id = 0;
 		CPU_ZERO(&cpus);
 		CPU_SET(cpu_id, &cpus);
+		int p = 1;
 		//param.sched_priority = newprio;
-
+		if(argv[1]) { //if on SS module on this machine
+			for (int i = 0; i < modules.size(); i++) {
+				for (int i_m = 0; i_m < modules[i].get_nti(); i_m++) {
+					if (modules[i].message_input_array[i_m].name == "СС") {
+						if (modules[i].get_machine() == my_machine) {
+							//pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+							ss_channels.push_back(p - 1);
+							cout << "do" << p - 1 << endl;
+							//modules[i].message_input_array[i_m].connection_type = 0;
+							//modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+							p = 8;
+						}
+					}
+				}
+			}
+		}
 		vector<pthread_t> thids;
 		starttime = timestamp();
-
-
 		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
 		//pthread_attr_setschedparam (&attr, &param);
 
@@ -658,28 +667,5 @@ void* create_sockets_for_receiving(void *arg) {
 		}
 		k++;
 	}
-}
-
-void write_into_file(Module * vals, ofstream * fout) {
-	int k = 0;
-	int count_send = 0;
-	int count_rec = 0;
-	while(array_for_file[vals->get_number()][k] != 0) {
-		if(array_for_file[vals->get_number()][k] == 1) {
-			k++;
-			count_send++;
-		}
-		else if(array_for_file[vals->get_number()][k] == 2) {
-			k++;
-			count_rec++;
-		}
-	}
-
-	if(count_rec != 0)
-		*fout << vals->get_name() << " получил сообщений " << count_rec
-		<< " цепочек " << count_rec / vals->get_nti() << endl;
-	if(count_send != 0)
-		*fout << vals->get_name() << " отправил сообщений " << count_send
-		<< " цепочек " << count_send / vals->get_nto() << endl;
 }
 
