@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
 				it->message_output_array[i].time_form << "	" <<
 				it->message_output_array[i].connection_type << "		" <<
 				it->message_output_array[i].channel_to << "     ";
-                if(it->message_input_array[i].connection_type) {
+                if(it->message_output_array[i].connection_type) {
                     fout << it->message_output_array[i].port_to << "     " << it->message_output_array[i].ip_address_to << endl;
                 }
                 else fout << endl;
