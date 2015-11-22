@@ -41,9 +41,9 @@ uint64_t starttime;
 
 string str = "messages_result.txt";
 string s = "modules.txt";
-string s1 = "/home/newuser/ClionProjects/BacWork/c++11to98/file1.txt";
-string s2 = "/home/newuser/ClionProjects/BacWork/c++11to98/file2.txt";
-string s3 = "/home/newuser/ClionProjects/BacWork/c++11to98/file3.txt";
+string s1 = "file1.txt";
+string s2 = "file2.txt";
+string s3 = "file3.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -253,28 +253,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		char * cstr = new char [str.length()+1];
-		strcpy(cstr, str.c_str());
-		ofstream fout(cstr);
-		//it = my_modules;
-		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
-			++it) {
-			fout << it->get_name() << endl;
-			for(int i = 0; i < it->get_nti(); i++) {
-				fout << it->message_input_array[i].name << "	" <<
-				it->message_input_array[i].time_hand << "	" <<
-				it->message_input_array[i].connection_type << "		" <<
-				it->message_input_array[i].channel_from << "		" <<
-				it->message_input_array[i].parameter << endl;
-			}
-			for(int i = 0; i < it->get_nto(); i++) {
-				fout << it->message_output_array[i].name << "	" <<
-				it->message_output_array[i].time_form << "	" <<
-				it->message_output_array[i].connection_type << "		" <<
-				it->message_output_array[i].channel_to << endl;
-			}
-            fout << endl;
-		}
+
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
 		pthread_t thread;
@@ -303,6 +282,36 @@ int main(int argc, char *argv[]) {
 					  ++it) {
 			pthread_join(*it, (void **) NULL);
 		}
+
+		char * cstr = new char [str.length()+1];
+		strcpy(cstr, str.c_str());
+		ofstream fout(cstr);
+		//it = my_modules;
+		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
+			++it) {
+			fout << it->get_name() << endl;
+			for(int i = 0; i < it->get_nti(); i++) {
+				fout << it->message_input_array[i].name << "	" <<
+				it->message_input_array[i].time_hand << "	" <<
+				it->message_input_array[i].connection_type << "		" <<
+				it->message_input_array[i].channel_from << "		" <<
+				it->message_input_array[i].parameter << "   ";
+                if(it->message_input_array[i].connection_type) {
+                    fout << it->get_port() << "     " << it->get_my_ip_address() << endl;
+                }
+			}
+			for(int i = 0; i < it->get_nto(); i++) {
+				fout << it->message_output_array[i].name << "	" <<
+				it->message_output_array[i].time_form << "	" <<
+				it->message_output_array[i].connection_type << "		" <<
+				it->message_output_array[i].channel_to << "     ";
+                if(it->message_input_array[i].connection_type) {
+                    fout << it->message_output_array[i].port_to << "     " << it->message_output_array[i].ip_address_to << endl;
+                }
+			}
+            fout << endl;
+		}
+
 		cout << "after join" << endl;
 
 		//initialisation
