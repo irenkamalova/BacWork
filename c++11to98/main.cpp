@@ -35,6 +35,7 @@ void wait_n_microsec(int n) {
 vector<Module> parser1();
 map<string, int> parser2();
 map<int, string> parser3();
+map<string, bool> parser4();
 const int PORT = 60000;
 const int N_GRIDS = 20000; //! for information array about receiving and sending messages
 uint64_t starttime;
@@ -44,6 +45,7 @@ string s = "modules.txt";
 string s1 = "file1.txt";
 string s2 = "file2.txt";
 string s3 = "file3.txt";
+string s4 = "file4.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -196,11 +198,14 @@ int main(int argc, char *argv[]) {
 		vector<Module> modules = parser1();
 		map<string, int> module_machine = parser2();
 		map<int, string> machine_address = parser3();
+        map<string, bool> module_aff = parser4();
+        
 		int port = PORT;
 
 		for(int i = 0; i < modules.size(); i++) {
 			modules[i].set_machine(module_machine[modules[i].get_name()]);
 			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
+            modules[i].set_affectation(module_aff[modules[i].get_name()]);
 		}
 
 		for(int i = 0; i < modules.size(); i++) {
@@ -379,8 +384,10 @@ int main(int argc, char *argv[]) {
 				    perror("Error on thread create");
 			    }                
             }
-			if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
-				perror("Error on thread create");
+			else {
+                if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
+				    perror("Error on thread create");
+                }
 			}
 		}
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
@@ -432,7 +439,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		for(int i = 0; i < my_modules.size(); i++) {
-			cout << modules[i].get_name() << endl;
+			cout << my_modules[i].get_name() << endl;
 			int k = 0;
 			while(array_of_queue[my_modules[i].get_number()][k] != 300)
 			{   			   
@@ -827,6 +834,21 @@ map<string, int> parser2() {
 	return module_machine;
 }
 
+map<string, bool> parser4() {
+	map<string, bool> module_aff;
+	char * cstr = new char [s4.length()+1];
+	strcpy(cstr, s2.c_str());
+	ifstream fin(cstr);
+	char buff[SIZE];
+	string module;
+	bool affectation;
+	while (fin >> buff) {
+		module = buff;
+		fin >> affectation;
+		module_aff[module] = affectation;
+	}
+	return module_aff;
+}
 
 vector<Module> parser1() {
 	char * cstr = new char [s1.length()+1];
