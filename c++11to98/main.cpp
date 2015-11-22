@@ -252,7 +252,36 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-
+		char * cstr = new char [str.length()+1];
+		strcpy(cstr, str.c_str());
+		ofstream fout(cstr);
+		//it = my_modules;
+		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
+			++it) {
+			fout << it->get_name() << endl;
+			for(int i = 0; i < it->get_nti(); i++) {
+				fout << it->message_input_array[i].name << "	" <<
+				it->message_input_array[i].time_hand << "	" <<
+				it->message_input_array[i].connection_type << "		" <<
+				it->message_input_array[i].channel_from << "		" <<
+				it->message_input_array[i].parameter << "   ";
+                if(it->message_input_array[i].connection_type) {
+                    fout << it->get_port() << "     " << it->get_my_ip_address() << endl;
+                }
+                else fout << endl;
+			}
+			for(int i = 0; i < it->get_nto(); i++) {
+				fout << it->message_output_array[i].name << "	" <<
+				it->message_output_array[i].time_form << "	" <<
+				it->message_output_array[i].connection_type << "		" <<
+				it->message_output_array[i].channel_to << "     ";
+                if(it->message_output_array[i].connection_type) {
+                    fout << it->message_output_array[i].port_to << "     " << it->message_output_array[i].ip_address_to << endl;
+                }
+                else fout << endl;
+			}
+            fout << endl;
+		}
 
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
@@ -283,10 +312,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 
-		char * cstr = new char [str.length()+1];
-		strcpy(cstr, str.c_str());
-		ofstream fout(cstr);
-		//it = my_modules;
+
 		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
 			++it) {
 			fout << it->get_name() << endl;
@@ -299,6 +325,7 @@ int main(int argc, char *argv[]) {
                 if(it->message_input_array[i].connection_type) {
                     fout << it->get_port() << "     " << it->get_my_ip_address() << endl;
                 }
+                else fout << endl;
 			}
 			for(int i = 0; i < it->get_nto(); i++) {
 				fout << it->message_output_array[i].name << "	" <<
@@ -308,6 +335,7 @@ int main(int argc, char *argv[]) {
                 if(it->message_input_array[i].connection_type) {
                     fout << it->message_output_array[i].port_to << "     " << it->message_output_array[i].ip_address_to << endl;
                 }
+                else fout << endl;
 			}
             fout << endl;
 		}
