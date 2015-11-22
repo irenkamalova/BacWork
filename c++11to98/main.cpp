@@ -207,7 +207,6 @@ int main(int argc, char *argv[]) {
 			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
             modules[i].set_affectation(module_aff[modules[i].get_name()]);
 		}
-
 		for(int i = 0; i < modules.size(); i++) {
 			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
 				modules[i].message_output_array[i_m];
@@ -837,7 +836,7 @@ map<string, int> parser2() {
 map<string, bool> parser4() {
 	map<string, bool> module_aff;
 	char * cstr = new char [s4.length()+1];
-	strcpy(cstr, s2.c_str());
+	strcpy(cstr, s4.c_str());
 	ifstream fin(cstr);
 	char buff[SIZE];
 	string module;
