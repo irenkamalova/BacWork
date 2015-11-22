@@ -240,7 +240,7 @@ int main(int argc, char *argv[]) {
 				my_modules.push_back(modules[i]);
 			}
 		}
-		if(argv[1]) { //if on SS module on this machine
+		if(atoi(argv[1])) { //if on SS module on this machine
 			for (int i = 0; i < my_modules.size(); i++) {
 				for (int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
 					if (my_modules[i].message_input_array[i_m].name == "СС") {
@@ -288,10 +288,11 @@ int main(int argc, char *argv[]) {
 		//here we need to create channels for sending and receiving
 		vector<pthread_t> threads;
 		pthread_t thread;
+        cout << my_modules.size() << endl;
 		for(int i = 0; i < my_modules.size(); i++) {
 			if(my_modules[i].get_port() != 0) {
 				threads.push_back(thread);
-				if (pthread_create(&threads[i], (pthread_attr_t *) NULL, create_sockets_for_receiving, &my_modules[i])) {
+				if (pthread_create(&(threads.back()), (pthread_attr_t *) NULL, create_sockets_for_receiving, &my_modules[i])) {
 					handle_error("Error on thread create");
 				}
 			}
@@ -358,12 +359,14 @@ int main(int argc, char *argv[]) {
 
 		vector<pthread_t> thids;
 		starttime = timestamp();
-		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-		//pthread_attr_setschedparam (&attr, &param);
+        if(atoi(argv[1])) {
+		    pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+		    //pthread_attr_setschedparam (&attr, &param);
 
-		if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
-			handle_error("Error on ss_thread create");
-		}
+		    if (pthread_create(&ss_thread, &attr, ss_module, (void *) NULL)) {
+			    handle_error("Error on ss_thread create");
+		    }
+        }
 		//after SS thread we start others threads
 		for(int i = 0; i < my_modules.size(); i++) {
 			thids.push_back(thread);
@@ -381,8 +384,9 @@ int main(int argc, char *argv[]) {
 			}
 		}
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
-        pthread_join(ss_thread, (void **) NULL);
-
+        if(atoi(argv[1])) {        
+            pthread_join(ss_thread, (void **) NULL);
+        }
 		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
 			 ++it) {
 			pthread_join(*it, (void **) NULL);
@@ -762,6 +766,7 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 void* create_sockets_for_receiving(void *arg) {
 	Module * vals = (Module *) arg;
 	vector<Module::message_input> m_i = vals->get_all_message_input();
+    cout << vals->get_name() << " start. size: " << m_i.size() << endl;
 	int socket_for_receiving;
 	if(vals->get_port() != 0) {
 		int port = vals->get_port();
@@ -770,17 +775,21 @@ void* create_sockets_for_receiving(void *arg) {
 	}
 	int k = 0;
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
+        cout << "k: " << k << endl;
 		if(it1->connection_type) { // type = socket
+            cout << "sock for recv: " << socket_for_receiving << endl;
 			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
+            cout << "channel from: " << it1->channel_from << endl;
 			if (it1->channel_from < 0) {
 				cerr << vals->get_port() << endl;
 				handle_error("Accept error:");
 			}
 			vals->message_input_array[k].channel_from = it1->channel_from;
-			cout << vals->get_name() << " accepted " << it1->name_from << endl;
+			cout << vals->get_name() << " accepted" << endl;
 		}
 		k++;
 	}
+    cout << vals->get_name() << " finish\n";
 }
 
 map<int, string> parser3() {
