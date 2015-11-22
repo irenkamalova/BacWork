@@ -221,7 +221,9 @@ int main(int argc, char *argv[]) {
 							else {
 								modules[i].message_output_array[i_m].connection_type = 1;
 								modules[j].message_input_array[j_m].connection_type = 1;
-								modules[j].set_port(port++);
+                                if( modules[j].get_port() == 0) {
+								    modules[j].set_port(port++);
+                                }
 								modules[i].message_output_array[i_m].port_to = modules[j].get_port();
 								modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
 								modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
