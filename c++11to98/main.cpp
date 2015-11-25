@@ -782,12 +782,12 @@ int create_socket(int *port, string *ip_address) {
 		handle_error("In function create_socket - connect:");
 
 	}
-	/*
+	
     int flag = 1;
     if(setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
         cerr << *port << endl;
 		handle_error("In function setsockopt - connect:");
-    }*/
+    }
 	return sock;
 }
 
@@ -807,12 +807,12 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 		handle_error("Bind error:");
 	}
 	listen(sock, 50);
-	/*
+	
     int flag = 1;
     if(setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
         cerr << *port << endl;
 		handle_error("In function setsockopt - receiving:");
-    }*/	
+    }	
 	return sock;
 }
 
