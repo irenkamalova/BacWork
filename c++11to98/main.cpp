@@ -156,9 +156,10 @@ void * ss_module(void * arg) {
 	int index = 0;
 	int k = 0;
 	int array_if_indexes[5000];
-	uint64_t t_i = starttime;
     pthread_barrier_wait (&barrier);
-    cout << "!SS!" << "after barrier" << endl;
+	starttime = timestamp();
+        uint64_t t_i = starttime;
+    //cout << "!SS!" << "after barrier" << endl;
 	while((timestamp() - starttime) < TIME_SS) {
         index++;
 
@@ -368,8 +369,8 @@ int main(int argc, char *argv[]) {
 		vector<pthread_t> thids;
 		starttime = timestamp();
 		int number_of_threads = my_modules.size() + 1; // m_size + 1
-        pthread_barrier_init (&barrier, NULL, number_of_threads);		
-		
+        pthread_barrier_init (&barrier, NULL, number_of_threads);
+
         if(atoi(argv[1])) {
 		    pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
 		    //pthread_attr_setschedparam (&attr, &param);
@@ -397,11 +398,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-	    int newprio = 99;
-
-	    sched_param param;
-	    param.sched_priority = newprio;
-        int pid = getpid();
+	  //  int newprio = 99;
+//
+//	    sched_param param;
+//	    param.sched_priority = newprio;
+  //      int pid = getpid();
         //cout << "pid " << pid << endl;
         //cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;
@@ -410,11 +411,11 @@ int main(int argc, char *argv[]) {
         //}
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
-        cout << "before join1" << endl;
+        //cout << "before join1" << endl;
         if(atoi(argv[1])) {
             pthread_join(ss_thread, (void **) NULL);
         }
-        cout << "before join2" << endl;
+        //cout << "before join2" << endl;
 		for (vector<pthread_t>::iterator it = thids.begin(); it != thids.end();
 			 ++it) {
 			pthread_join(*it, (void **) NULL);
@@ -541,7 +542,7 @@ void * module (void * arg) {
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;		
     //cout << name << "before barrier" << endl;
     pthread_barrier_wait (&barrier);
-    cout << name << "after barrier" << endl;
+    //cout << name << "after barrier" << endl;
 	while( (timestamp() - starttime) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
