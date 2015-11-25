@@ -9,7 +9,8 @@
 #include <unistd.h>  //for sleep
 #include <stdlib.h>  //atoi
 #include <sched.h>
-#include <map>
+#include <map> 
+#include <netinet/tcp.h>
 #define BILLION 1000000000L
 
 #define handle_error(msg) \
@@ -38,6 +39,7 @@ map<int, string> parser3();
 map<string, bool> parser4();
 const int PORT = 60000;
 const int N_GRIDS = 20000; //! for information array about receiving and sending messages
+const int N_GRIDS2 = 40000;
 uint64_t starttime;
 
 string str = "messages_result.txt";
@@ -56,6 +58,7 @@ static const int LENGTH_OF_ARRAY = 1500;
 int array_for_file[NUMBER_OF_MODULES][70000];
 uint64_t array_of_max_queue[100];
 uint64_t array_of_queue[NUMBER_OF_MODULES][N_GRIDS];
+uint64_t array_of_times[NUMBER_OF_MODULES][N_GRIDS2];
 //vector<map<int, long long int> >
 
 vector<Module> parser();
@@ -319,7 +322,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 
-
+        //output in check file
 		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
 			++it) {
 			fout << it->get_name() << endl;
@@ -380,15 +383,29 @@ int main(int argc, char *argv[]) {
         		CPU_SET(cpu_id, &cpus);
                 pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
 			    if (pthread_create(&thids[i], &attr, module, &my_modules[i])) {
-				    perror("Error on thread create");
+				    perror("Error on thread create2");
 			    }                
             }
 			else {
                 if (pthread_create(&thids[i], (pthread_attr_t *) NULL, module, &my_modules[i])) {
-				    perror("Error on thread create");
+				    perror("Error on thread create3");
                 }
 			}
 		}
+		
+	    int newprio = 99;
+
+	    sched_param param; 
+	    param.sched_priority = newprio;   
+        int pid = getpid();
+        cout << "pid " << pid << endl;
+        cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
+        cout <<  "sched: " << sched_getscheduler(pid) << endl;
+        if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+            perror("on setscheduler: ");
+        } 
+        cout <<  "sched: " << sched_getscheduler(pid) << endl;		
+		
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         if(atoi(argv[1])) {        
             pthread_join(ss_thread, (void **) NULL);
@@ -440,7 +457,7 @@ int main(int argc, char *argv[]) {
 		for(int i = 0; i < my_modules.size(); i++) {
 			cout << my_modules[i].get_name() << endl;
 			int k = 0;
-			while(array_of_queue[my_modules[i].get_number()][k] != 300)
+			while((array_of_queue[my_modules[i].get_number()][k] != 300)&&(array_of_queue[my_modules[i].get_number()][k] != 0))
 			{   			   
 				    cout << array_of_queue[my_modules[i].get_number()][k] << " ";
 				    k++;
@@ -450,6 +467,20 @@ int main(int argc, char *argv[]) {
             cout << k/2 << endl;
 			cout << endl;
 		}
+		
+		//the last output
+		for(int i = 0; i < my_modules.size(); i++) {
+			cout << my_modules[i].get_name() << endl;
+			int k = 0;
+			while((array_of_times[my_modules[i].get_number()][k] != 0))
+			{   			   
+				    cout << (array_of_times[my_modules[i].get_number()][k + 1] - array_of_times[my_modules[i].get_number()][k]) / 1000 << endl;
+				    k++;
+
+			}
+            cout << k << endl;
+			cout << endl;
+		}		
 //*/
 		cout << "finished" << endl;
 
@@ -470,6 +501,7 @@ void * module (void * arg) {
 	short messages = 1;
 	int index = 0;
 	int recv_index = 0; //for messages queue
+	int time_index = 0;
 	//int send_index = 0;
 	int max_long_of_messages_queue = 0;
 	int long_of_messages_queue = 0;
@@ -489,7 +521,18 @@ void * module (void * arg) {
 	send_object_s = new sender_socket;
 	//uint64_t delay = timestamp() - starttime;
 	int received = 0;
+	    int newprio = 99;
 
+	    sched_param param; 
+	    param.sched_priority = newprio;   
+        int pid = getpid();
+        cout << "pid " << pid << endl;
+        cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
+        cout <<  "sched: " << sched_getscheduler(pid) << endl;
+        if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+            perror("on setscheduler: ");
+        } 
+        cout <<  "sched: " << sched_getscheduler(pid) << endl;		
 
 	while( (timestamp() - starttime) < TIME) {
 
@@ -516,20 +559,14 @@ void * module (void * arg) {
 					long_of_messages_queue++;
 					if (max_long_of_messages_queue < long_of_messages_queue)
 						max_long_of_messages_queue = long_of_messages_queue;
-
+                    array_of_times[vals->get_number()][time_index] = timestamp();
+                    time_index++;
 					//receiving
 					array_for_file[vals->get_number()][index] = 2; //bad
 					//cout << index << endl;
 					index++;
                     wait_n_microsec(it->time_hand);
-/*
-					for (l = 0; l < it->time_hand; l++) {
-						result = 1;
-						for (k = 1; k <= 250; k++) {
-							result = result * k;
-						}
-					}
-*/
+
 					if (it->parameter)
 						mess_by_param++;
 				}
@@ -559,14 +596,7 @@ void * module (void * arg) {
 			for (i = 0; i < messages; i++) {
 				for (k = 0; k < m_o.size(); k++) {
                     wait_n_microsec(m_o[k].time_form);
-/*
-					for (l = 0; l < m_o[k].time_form; l++) {
-						result = 1;
-						for (n = 1; n <= 250; n++) {
-							result = result * n;
-						}
-					}
-*/
+
 					if (!m_o[k].connection_type) { // type = queue
 						send_object = send_object_q;
 					}
@@ -574,10 +604,6 @@ void * module (void * arg) {
 						send_object = send_object_s;
 					}
                     send_object->send_message(m_o[k].channel_to);
-					//if(send_object->send_message(m_o[k].channel_to) == -1) {
-						//cout << vals->get_name() << endl;
-					//}
-
 					array_for_file[vals->get_number()][index] = 1;
 					//cout << index << endl;
 					index++;
@@ -747,6 +773,12 @@ int create_socket(int *port, string *ip_address) {
 		handle_error("In function create_socket - connect:");
 
 	}
+	
+    int flag = 1;
+    if(setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
+        cerr << *port << endl;
+		handle_error("In function setsockopt - connect:");
+    }
 	return sock;
 }
 
@@ -766,6 +798,12 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 		handle_error("Bind error:");
 	}
 	listen(sock, 50);
+	
+    int flag = 1;
+    if(setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
+        cerr << *port << endl;
+		handle_error("In function setsockopt - receiving:");
+    }	
 	return sock;
 }
 
@@ -790,6 +828,10 @@ void* create_sockets_for_receiving(void *arg) {
 				cerr << vals->get_port() << endl;
 				handle_error("Accept error:");
 			}
+			    int flag = 1;
+            if(setsockopt( it1->channel_from, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
+		        handle_error("In function setsockopt:");
+            }
 			vals->message_input_array[k].channel_from = it1->channel_from;
 			cout << vals->get_name() << " accepted" << endl;
 		}
