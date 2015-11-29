@@ -35,7 +35,7 @@ void wait_n_microsec(int n) {
 
 pthread_barrier_t   barrier;
 
-vector<Module> parser1();
+vector<Module> parser1(string s1);
 map<string, int> parser2();
 map<int, string> parser3();
 map<string, bool> parser4();
@@ -46,7 +46,7 @@ uint64_t starttime;
 
 string str = "messages_result.txt";
 string s = "modules.txt";
-string s1 = "/home/irisha/ClionProjects/BacWork/c++11to98/file1.txt";
+//string s1 = "/home/irisha/ClionProjects/BacWork/c++11to98/file1.txt";
 string s2 = "/home/irisha/ClionProjects/BacWork/c++11to98/file2.txt";
 string s3 = "/home/irisha/ClionProjects/BacWork/c++11to98/file3.txt";
 string s4 = "/home/irisha/ClionProjects/BacWork/c++11to98/file4.txt";
@@ -192,7 +192,7 @@ void * ss_module(void * arg) {
 
 int main(int argc, char *argv[]) {
 	
-	if (argc == 4) {
+	if (argc == 6) {
 
 		for(int k = 0; k < NUMBER_OF_MODULES; k++)
 			for(int j = 0; j < N_GRIDS; j++)
@@ -200,8 +200,32 @@ int main(int argc, char *argv[]) {
 
 
 		int my_machine = atoi(argv[2]);
+        string s_a = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_auto.txt";
+		vector<Module> modules_auto = parser1(s_a);
+        string s_b = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_search.txt";
+        vector<Module> modules_search = parser1(s_b);
+        string s_c = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_general.txt";
+        vector<Module> modules_general = parser1(s_c);
 
-		vector<Module> modules = parser1();
+        vector<Module> modules;
+        for(int i = 0; i < atoi(argv[4]); i++)
+            for(int j = 0; j < modules_auto.size(); j++) {
+                modules_auto[j].set_number(modules.size());
+                modules.push_back(modules_auto[j]);
+            }
+
+        for(int i = 0; i < atoi(argv[5]); i++)
+            for(int j = 0; j < modules_search.size(); j++) {
+                modules_search[j].set_number(modules.size());
+                modules.push_back(modules_search[j]);
+            }
+
+        for(int j = 0; j < modules_general.size(); j++) {
+            modules_general[j].set_number(modules.size());
+            modules.push_back(modules_general[j]);
+        }
+
+
 		map<string, int> module_machine = parser2();
 		map<int, string> machine_address = parser3();
         map<string, bool> module_aff = parser4();
@@ -937,7 +961,7 @@ map<string, bool> parser4() {
 	return module_aff;
 }
 
-vector<Module> parser1() {
+vector<Module> parser1(string s1) {
 	char * cstr = new char [s1.length()+1];
 	strcpy(cstr, s1.c_str());
 	ifstream fin(cstr);
