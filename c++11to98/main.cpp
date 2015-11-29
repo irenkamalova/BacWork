@@ -324,12 +324,10 @@ int main(int argc, char *argv[]) {
                         else {
                             if_SS_need_accept = true;
                             modules[i].message_output_array[i_m].connection_type = 1;
-                            if (modules[i].get_port() == 0) {
-                                modules[i].set_port(port++);
-                            }
+                            modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
+                            modules[i].message_input_array[i_m].channel_from = -1;
                             SS_port.push_back(modules[i].get_port());
                             SS_ip_address_to.push_back(modules[i].get_my_ip_address());
-                            modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
                         }
                     }
                 }
@@ -388,19 +386,7 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        int socket_for_receiving;
-        if (SS_port.size() != 0) {
-            socket_for_receiving = create_sock_for_receiving(&port, &machine_address[my_machine]);
-        }
 
-        for(int i = 0; i < SS_port.size(); i++) {
-            int socket = accept(socket_for_receiving, NULL, NULL);
-            int flag = 1;
-            if(setsockopt( socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
-                handle_error("In function setsockopt:");
-            }
-            SS_channels_network.push_back( socket );
-        }
         sleep(2);
 
 
@@ -413,6 +399,12 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
+
+        for(int i = 0; i < SS_port.size(); i++) {
+            cout << "in cycle for connrect" << endl;
+            int socket = create_socket(&(SS_port[i]), &(SS_ip_address_to[i]));
+            SS_channels_network.push_back( socket );
+        }
 
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 					  ++it) {
