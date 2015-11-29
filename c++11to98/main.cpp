@@ -71,6 +71,9 @@ void* module(void * arg);
 vector<pair<int*, int*> > pairs;
 int datas[NUMBER_OF_QUEUE_CH][LENGTH_OF_ARRAY];
 vector<int> ss_channels;
+vector<int> SS_port;
+vector<string> SS_ip_address_to;
+vector<int> SS_channels_network;
 
 
 void receive_message(int& number_of_current_pair) {
@@ -151,6 +154,7 @@ struct sender_socket : sender {
 void * ss_module(void * arg) {
 
 	sender_queue *sq = new sender_queue;
+    sender_socket *st = new sender_socket;
 	int count_messages_ss = 0;
 	int propusk = 0;
 	int index = 0;
@@ -165,8 +169,11 @@ void * ss_module(void * arg) {
 
 		for(int i = 0; i < ss_channels.size(); i++) {
 			sq->send_message(ss_channels[i]);
-
 		}
+
+        for(int i = 0; i < SS_channels_network.size(); i++) {
+            st->send_message(SS_channels_network[i]);
+        }
         count_messages_ss++;
 		t_i = t_i + SLEEP_TIME;
 		if( (t_i < timestamp())  ) {
@@ -194,177 +201,207 @@ int main(int argc, char *argv[]) {
 	
 	if (argc == 6) {
 
-		for(int k = 0; k < NUMBER_OF_MODULES; k++)
-			for(int j = 0; j < N_GRIDS; j++)
-				array_for_file[k][j] = 0;
+        for (int k = 0; k < NUMBER_OF_MODULES; k++)
+            for (int j = 0; j < N_GRIDS; j++)
+                array_for_file[k][j] = 0;
 
 
-		int my_machine = atoi(argv[2]);
+        int my_machine = atoi(argv[2]);
         string s_a = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_auto.txt";
-		vector<Module> modules_auto = parser1(s_a);
+        vector<Module> modules_auto = parser1(s_a);
         string s_b = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_search.txt";
         vector<Module> modules_search = parser1(s_b);
         string s_c = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_general.txt";
         vector<Module> modules_general = parser1(s_c);
 
         vector<Module> modules;
-        for(int i = 0; i < atoi(argv[4]); i++)
-            for(int j = 0; j < modules_auto.size(); j++) {
+        for (int i = 0; i < atoi(argv[4]); i++)
+            for (int j = 0; j < modules_auto.size(); j++) {
                 modules_auto[j].set_number(modules.size());
                 modules.push_back(modules_auto[j]);
             }
 
-        for(int i = 0; i < atoi(argv[5]); i++)
-            for(int j = 0; j < modules_search.size(); j++) {
+        for (int i = 0; i < atoi(argv[5]); i++)
+            for (int j = 0; j < modules_search.size(); j++) {
                 modules_search[j].set_number(modules.size());
                 modules.push_back(modules_search[j]);
             }
 
-        for(int j = 0; j < modules_general.size(); j++) {
+        for (int j = 0; j < modules_general.size(); j++) {
             modules_general[j].set_number(modules.size());
             modules.push_back(modules_general[j]);
         }
 
 
-		map<string, int> module_machine = parser2();
-		map<int, string> machine_address = parser3();
+        map<string, int> module_machine = parser2();
+        map<int, string> machine_address = parser3();
         map<string, bool> module_aff = parser4();
-        
-		int port = atoi(argv[3]);
 
-		for(int i = 0; i < modules.size(); i++) {
-			modules[i].set_machine(module_machine[modules[i].get_name()]);
-			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
+        int port = atoi(argv[3]);
+
+        for (int i = 0; i < modules.size(); i++) {
+            modules[i].set_machine(module_machine[modules[i].get_name()]);
+            modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
             modules[i].set_affectation(module_aff[modules[i].get_name()]);
-		}
-        
-		for(int i = 0; i < modules.size(); i++) {
-			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
-				modules[i].message_output_array[i_m];
-				for(int j = i + 1; j < modules.size(); j++) {
-                    int j_m = 0;					
-                    for(; j_m < modules[j].get_nti(); j_m++) {
+        }
 
-						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
-							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
+        for (int i = 0; i < modules.size(); i++) {
+            for (int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
+                modules[i].message_output_array[i_m];
+                for (int j = i + 1; j < modules.size(); j++) {
+                    int j_m = 0;
+                    for (; j_m < modules[j].get_nti(); j_m++) {
 
-                            if(modules[j].message_input_array[j_m].channel_from == 0) {
-							    if(modules[i].get_machine() == modules[j].get_machine()) {
-								    modules[i].message_output_array[i_m].connection_type = 0;
-								    modules[j].message_input_array[j_m].connection_type = 0;
-								    pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-								    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
-								    modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
-							    }
-							    else {
-								    modules[i].message_output_array[i_m].connection_type = 1;
-								    modules[j].message_input_array[j_m].connection_type = 1;
-                                    if( modules[j].get_port() == 0) {
-								        modules[j].set_port(port++);
+                        if ((modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
+                            && (modules[i].message_output_array[i_m].name_to == modules[j].get_name())) {
+
+                            if (modules[j].message_input_array[j_m].channel_from == 0) {
+                                if (modules[i].get_machine() == modules[j].get_machine()) {
+                                    modules[i].message_output_array[i_m].connection_type = 0;
+                                    modules[j].message_input_array[j_m].connection_type = 0;
+                                    pairs.push_back(
+                                            make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+                                    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+                                    modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
+                                }
+                                else {
+                                    modules[i].message_output_array[i_m].connection_type = 1;
+                                    modules[j].message_input_array[j_m].connection_type = 1;
+                                    if (modules[j].get_port() == 0) {
+                                        modules[j].set_port(port++);
                                     }
-								    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
-								    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
-								    modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
+                                    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+                                    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+                                    modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
                                     modules[j].message_input_array[j_m].channel_from = -1;
-							    }
+                                }
                             }
                             else {
                                 Module::message_input m_i = modules[j].message_input_array[j_m];
-							    if(modules[i].get_machine() == modules[j].get_machine()) {
-								    modules[i].message_output_array[i_m].connection_type = 0;
-								    m_i.connection_type = 0;
-								    pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-								    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
-								    m_i.channel_from = pairs.size() - 1;
-							    }
-							    else {
-								    modules[i].message_output_array[i_m].connection_type = 1;
-								    m_i.connection_type = 1;
-                                    if( modules[j].get_port() == 0) {
-								        modules[j].set_port(port++);
+                                if (modules[i].get_machine() == modules[j].get_machine()) {
+                                    modules[i].message_output_array[i_m].connection_type = 0;
+                                    m_i.connection_type = 0;
+                                    pairs.push_back(
+                                            make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+                                    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+                                    m_i.channel_from = pairs.size() - 1;
+                                }
+                                else {
+                                    modules[i].message_output_array[i_m].connection_type = 1;
+                                    m_i.connection_type = 1;
+                                    if (modules[j].get_port() == 0) {
+                                        modules[j].set_port(port++);
                                     }
-								    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
-								    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
-								    m_i.ip_address_from = modules[i].get_my_ip_address();
+                                    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+                                    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+                                    m_i.ip_address_from = modules[i].get_my_ip_address();
                                     m_i.channel_from = -1;
-							    }                                
-			                    modules[j].set_message_input(m_i, modules[j].get_nti());
-			                    modules[j].inc_nti();
-                                
+                                }
+                                modules[j].set_message_input(m_i, modules[j].get_nti());
+                                modules[j].inc_nti();
+
                             }
-                        break;
+                            break;
                         }
-					}
-                    if(j_m < modules[j].get_nti())
+                    }
+                    if (j_m < modules[j].get_nti())
                         break;
-				}
-			}
-		}
-		 //modules for this machine
-		vector<Module> my_modules;
-		for(int i = 0; i < modules.size(); i++) {
-			if(modules[i].get_machine() == my_machine) {
-				my_modules.push_back(modules[i]);
-			}
-		}
-		if(atoi(argv[1])) { //if on SS module on this machine
-			for (int i = 0; i < my_modules.size(); i++) {
-				for (int i_m = 0; i_m < my_modules[i].get_nti(); i_m++) {
-					if (my_modules[i].message_input_array[i_m].name == "СС") {
-						//if (my_modules[i].get_machine() == my_machine) {
-						pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-						ss_channels.push_back(pairs.size() - 1);
-						my_modules[i].message_input_array[i_m].connection_type = 0;
-						my_modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
-						//}
-					}
-				}
-			}
-		}
-		char * cstr = new char [str.length()+1];
-		strcpy(cstr, str.c_str());
-		ofstream fout(cstr);
-		//it = my_modules;
-		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
-			++it) {
-			fout << it->get_name() << endl;
-			for(int i = 0; i < it->get_nti(); i++) {
-				fout << it->message_input_array[i].name << "	" <<
-				it->message_input_array[i].time_hand << "	" <<
-				it->message_input_array[i].connection_type << "		" <<
-				it->message_input_array[i].channel_from << "		" <<
-				it->message_input_array[i].parameter << "   ";
-                if(it->message_input_array[i].connection_type) {
+                }
+            }
+        }
+        bool if_SS_need_accept = false;
+        //modules for this machine
+        if (atoi(argv[1])) { //if on SS module on this machine
+            for (int i = 0; i < modules.size(); i++) {
+                for (int i_m = 0; i_m < modules[i].get_nti(); i_m++) {
+                    if (modules[i].message_input_array[i_m].name == "СС") {
+                        if (modules[i].get_machine() == my_machine) { // then will create pair
+                            pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+                            ss_channels.push_back(pairs.size() - 1);
+                            modules[i].message_input_array[i_m].connection_type = 0;
+                            modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+                        }
+                        else {
+                            if_SS_need_accept = true;
+                            modules[i].message_output_array[i_m].connection_type = 1;
+                            if (modules[i].get_port() == 0) {
+                                modules[i].set_port(port++);
+                            }
+                            SS_port.push_back(modules[i].get_port());
+                            SS_ip_address_to.push_back(modules[i].get_my_ip_address());
+                            modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
+                        }
+                    }
+                }
+            }
+        }
+
+        vector<Module> my_modules;
+        for (int i = 0; i < modules.size(); i++) {
+            if (modules[i].get_machine() == my_machine) {
+                my_modules.push_back(modules[i]);
+            }
+        }
+
+        char *cstr = new char[str.length() + 1];
+        strcpy(cstr, str.c_str());
+        ofstream fout(cstr);
+        //it = my_modules;
+        for (vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
+             ++it) {
+            fout << it->get_name() << endl;
+            for (int i = 0; i < it->get_nti(); i++) {
+                fout << it->message_input_array[i].name << "	" <<
+                it->message_input_array[i].time_hand << "	" <<
+                it->message_input_array[i].connection_type << "		" <<
+                it->message_input_array[i].channel_from << "		" <<
+                it->message_input_array[i].parameter << "   ";
+                if (it->message_input_array[i].connection_type) {
                     fout << it->get_port() << "     " << it->get_my_ip_address() << endl;
                 }
                 else fout << endl;
-			}
-			for(int i = 0; i < it->get_nto(); i++) {
-				fout << it->message_output_array[i].name << "	" <<
-				it->message_output_array[i].time_form << "	" <<
-				it->message_output_array[i].connection_type << "		" <<
-				it->message_output_array[i].channel_to << "     ";
-                if(it->message_output_array[i].connection_type) {
-                    fout << it->message_output_array[i].port_to << "     " << it->message_output_array[i].ip_address_to << endl;
+            }
+            for (int i = 0; i < it->get_nto(); i++) {
+                fout << it->message_output_array[i].name << "	" <<
+                it->message_output_array[i].time_form << "	" <<
+                it->message_output_array[i].connection_type << "		" <<
+                it->message_output_array[i].channel_to << "     ";
+                if (it->message_output_array[i].connection_type) {
+                    fout << it->message_output_array[i].port_to << "     " <<
+                    it->message_output_array[i].ip_address_to << endl;
                 }
                 else fout << endl;
-			}
+            }
             fout << endl;
-		}
+        }
 
-		//here we need to create channels for sending and receiving
-		vector<pthread_t> threads;
-		pthread_t thread;
+        //here we need to create channels for sending and receiving
+        vector<pthread_t> threads;
+        pthread_t thread;
         cout << my_modules.size() << endl;
-		for(int i = 0; i < my_modules.size(); i++) {
-			if(my_modules[i].get_port() != 0) {
-				threads.push_back(thread);
-				if (pthread_create(&(threads.back()), (pthread_attr_t *) NULL, create_sockets_for_receiving, &my_modules[i])) {
-					handle_error("Error on thread create");
-				}
-			}
-		}
-		sleep(2);
+        for (int i = 0; i < my_modules.size(); i++) {
+            if (my_modules[i].get_port() != 0) {
+                threads.push_back(thread);
+                if (pthread_create(&(threads.back()), (pthread_attr_t *) NULL, create_sockets_for_receiving,
+                                   &my_modules[i])) {
+                    handle_error("Error on thread create");
+                }
+            }
+        }
+        int socket_for_receiving;
+        if (SS_port.size() != 0) {
+            socket_for_receiving = create_sock_for_receiving(&port, &machine_address[my_machine]);
+        }
+
+        for(int i = 0; i < SS_port.size(); i++) {
+            int socket = accept(socket_for_receiving, NULL, NULL);
+            int flag = 1;
+            if(setsockopt( socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag) ) < 0) {
+                handle_error("In function setsockopt:");
+            }
+            SS_channels_network.push_back( socket );
+        }
+        sleep(2);
 
 
 		for(int i = 0; i < my_modules.size(); i++) {
@@ -497,7 +534,7 @@ int main(int argc, char *argv[]) {
 					count_rec++;
 				}
 			}
-            if(my_modules[i].get_number() < 8) {
+            if(my_modules[i].get_number() < my_modules.size() - modules_general.size()) {
 		        if(count_rec != 0) {
 			            cout << my_modules[i].get_name() << " получил сообщений " << count_rec
 			            << " цепочек " << count_rec / my_modules[i].get_nti() << endl;
@@ -603,7 +640,7 @@ void * module (void * arg) {
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;		
     //cout << name << "before barrier" << endl;
     pthread_barrier_wait (&barrier);
-    cout << name << "after barrier" << endl;
+    //cout << name << "after barrier" << endl;
 	while( (timestamp() - starttime) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
@@ -700,7 +737,7 @@ void * module (void * arg) {
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	array_of_queue[vals->get_number()][recv_index] = 300;
-	cout << vals->get_name() << " finished " << endl;
+	//cout << vals->get_name() << " finished " << endl;
 }
 
 vector<Module> parser() {
@@ -880,7 +917,6 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 void* create_sockets_for_receiving(void *arg) {
 	Module * vals = (Module *) arg;
 	vector<Module::message_input> m_i = vals->get_all_message_input();
-    cout << vals->get_name() << " start. size: " << m_i.size() << endl;
 	int socket_for_receiving;
 	if(vals->get_port() != 0) {
 		int port = vals->get_port();
@@ -891,9 +927,7 @@ void* create_sockets_for_receiving(void *arg) {
 	for(vector<Module::message_input>::iterator it1 = m_i.begin(); it1 != m_i.end(); ++it1 ) {
         cout << "k: " << k << endl;
 		if(it1->connection_type) { // type = socket
-            cout << "sock for recv: " << socket_for_receiving << endl;
 			it1->channel_from = accept(socket_for_receiving, NULL, NULL);
-            cout << "channel from: " << it1->channel_from << endl;
 			if (it1->channel_from < 0) {
 				cerr << vals->get_port() << endl;
 				handle_error("Accept error:");
