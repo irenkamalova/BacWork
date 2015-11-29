@@ -46,10 +46,10 @@ uint64_t starttime;
 
 string str = "messages_result.txt";
 string s = "modules.txt";
-string s1 = "file1.txt";
-string s2 = "file2.txt";
-string s3 = "file3.txt";
-string s4 = "file4.txt";
+string s1 = "/home/irisha/ClionProjects/BacWork/c++11to98/file1.txt";
+string s2 = "/home/irisha/ClionProjects/BacWork/c++11to98/file2.txt";
+string s3 = "/home/irisha/ClionProjects/BacWork/c++11to98/file3.txt";
+string s4 = "/home/irisha/ClionProjects/BacWork/c++11to98/file4.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -192,7 +192,7 @@ void * ss_module(void * arg) {
 
 int main(int argc, char *argv[]) {
 	
-	if (argc == 3) {
+	if (argc == 4) {
 
 		for(int k = 0; k < NUMBER_OF_MODULES; k++)
 			for(int j = 0; j < N_GRIDS; j++)
@@ -206,40 +206,73 @@ int main(int argc, char *argv[]) {
 		map<int, string> machine_address = parser3();
         map<string, bool> module_aff = parser4();
         
-		int port = PORT;
+		int port = atoi(argv[3]);
 
 		for(int i = 0; i < modules.size(); i++) {
 			modules[i].set_machine(module_machine[modules[i].get_name()]);
 			modules[i].set_my_ip_address(machine_address[modules[i].get_machine()]);
             modules[i].set_affectation(module_aff[modules[i].get_name()]);
 		}
+        
 		for(int i = 0; i < modules.size(); i++) {
 			for(int i_m = 0; i_m < modules[i].get_nto(); i_m++) {
 				modules[i].message_output_array[i_m];
 				for(int j = i + 1; j < modules.size(); j++) {
-					for(int j_m = 0; j_m < modules[j].get_nti(); j_m++) {
+                    int j_m = 0;					
+                    for(; j_m < modules[j].get_nti(); j_m++) {
 
 						if( (modules[i].message_output_array[i_m].name == modules[j].message_input_array[j_m].name)
 							&& (modules[i].message_output_array[i_m].name_to == modules[j].get_name()) ) {
-							if(modules[i].get_machine() == modules[j].get_machine()) {
-								modules[i].message_output_array[i_m].connection_type = 0;
-								modules[j].message_input_array[j_m].connection_type = 0;
-								pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-								modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
-								modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
-							}
-							else {
-								modules[i].message_output_array[i_m].connection_type = 1;
-								modules[j].message_input_array[j_m].connection_type = 1;
-                                if( modules[j].get_port() == 0) {
-								    modules[j].set_port(port++);
-                                }
-								modules[i].message_output_array[i_m].port_to = modules[j].get_port();
-								modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
-								modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
-							}
-						}
+
+                            if(modules[j].message_input_array[j_m].channel_from == 0) {
+							    if(modules[i].get_machine() == modules[j].get_machine()) {
+								    modules[i].message_output_array[i_m].connection_type = 0;
+								    modules[j].message_input_array[j_m].connection_type = 0;
+								    pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+								    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+								    modules[j].message_input_array[j_m].channel_from = pairs.size() - 1;
+							    }
+							    else {
+								    modules[i].message_output_array[i_m].connection_type = 1;
+								    modules[j].message_input_array[j_m].connection_type = 1;
+                                    if( modules[j].get_port() == 0) {
+								        modules[j].set_port(port++);
+                                    }
+								    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+								    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+								    modules[j].message_input_array[j_m].ip_address_from = modules[i].get_my_ip_address();
+                                    modules[j].message_input_array[j_m].channel_from = -1;
+							    }
+                            }
+                            else {
+                                Module::message_input m_i = modules[j].message_input_array[j_m];
+							    if(modules[i].get_machine() == modules[j].get_machine()) {
+								    modules[i].message_output_array[i_m].connection_type = 0;
+								    m_i.connection_type = 0;
+								    pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+								    modules[i].message_output_array[i_m].channel_to = pairs.size() - 1;
+								    m_i.channel_from = pairs.size() - 1;
+							    }
+							    else {
+								    modules[i].message_output_array[i_m].connection_type = 1;
+								    m_i.connection_type = 1;
+                                    if( modules[j].get_port() == 0) {
+								        modules[j].set_port(port++);
+                                    }
+								    modules[i].message_output_array[i_m].port_to = modules[j].get_port();
+								    modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
+								    m_i.ip_address_from = modules[i].get_my_ip_address();
+                                    m_i.channel_from = -1;
+							    }                                
+			                    modules[j].set_message_input(m_i, modules[j].get_nti());
+			                    modules[j].inc_nti();
+                                
+                            }
+                        break;
+                        }
 					}
+                    if(j_m < modules[j].get_nti())
+                        break;
 				}
 			}
 		}
@@ -325,7 +358,7 @@ int main(int argc, char *argv[]) {
 			pthread_join(*it, (void **) NULL);
 		}
 
-        //output in check file
+        /*/output in check file
 		for(vector<Module>::iterator it = my_modules.begin(); it != my_modules.end();
 			++it) {
 			fout << it->get_name() << endl;
@@ -352,7 +385,7 @@ int main(int argc, char *argv[]) {
 			}
             fout << endl;
 		}
-
+        */
 		cout << "after join" << endl;
 
 		//initialisation
@@ -368,7 +401,11 @@ int main(int argc, char *argv[]) {
 
 		vector<pthread_t> thids;
 		starttime = timestamp();
-		int number_of_threads = my_modules.size() + 1; // m_size + 1
+        int number_of_threads = my_modules.size();
+        if(atoi(argv[1])) {
+            number_of_threads++;
+        }
+		 // m_size + 1
         pthread_barrier_init (&barrier, NULL, number_of_threads);
 
         if(atoi(argv[1])) {
@@ -542,7 +579,7 @@ void * module (void * arg) {
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;		
     //cout << name << "before barrier" << endl;
     pthread_barrier_wait (&barrier);
-    //cout << name << "after barrier" << endl;
+    cout << name << "after barrier" << endl;
 	while( (timestamp() - starttime) < TIME) {
 
 		for (vector<Module::message_input>::iterator it = m_i.begin(); it != m_i.end(); ++it) {
@@ -639,7 +676,7 @@ void * module (void * arg) {
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	array_of_queue[vals->get_number()][recv_index] = 300;
-	//cout << vals->get_name() << " finished " << endl;
+	cout << vals->get_name() << " finished " << endl;
 }
 
 vector<Module> parser() {
@@ -942,6 +979,8 @@ vector<Module> parser1() {
 			int time_hand;
 			fin >> time_hand;
 			m_i.time_hand = time_hand;
+
+            m_i.channel_from = 0;
 
 			bool parameter;
 			fin >> parameter;
