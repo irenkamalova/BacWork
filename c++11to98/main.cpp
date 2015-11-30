@@ -40,7 +40,7 @@ map<string, int> parser2();
 map<int, string> parser3();
 map<string, bool> parser4();
 const int PORT = 60000;
-const int N_GRIDS = 20000; //! for information array about receiving and sending messages
+const int N_GRIDS = 50000; //! for information array about receiving and sending messages
 const int N_GRIDS2 = 40000;
 uint64_t starttime;
 
@@ -53,12 +53,11 @@ string s4 = "file4.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
-static const short THREAD_SLEEP = 10;
-static const short NUMBER_OF_QUEUE_CH = 50;
-static const short NUMBER_OF_MODULES = 30;
+static const short NUMBER_OF_QUEUE_CH = 300;
+static const short NUMBER_OF_MODULES = 150;
 static const int LENGTH_OF_ARRAY = 1500;
-int array_for_file[NUMBER_OF_MODULES][70000];
-uint64_t array_of_max_queue[100];
+int array_for_file[NUMBER_OF_MODULES][700000];
+uint64_t array_of_max_queue[200];
 uint64_t array_of_queue[NUMBER_OF_MODULES][N_GRIDS];
 uint64_t array_of_times[NUMBER_OF_MODULES][N_GRIDS2];
 //vector<map<int, long long int> >
@@ -152,7 +151,7 @@ struct sender_socket : sender {
 };
 
 void * ss_module(void * arg) {
-
+	cout << "in SS m" << endl;
 	sender_queue *sq = new sender_queue;
     sender_socket *st = new sender_socket;
 	int count_messages_ss = 0;
@@ -501,17 +500,17 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-	  //  int newprio = 99;
+	    int newprio = 99;
 //
-//	    sched_param param;
-//	    param.sched_priority = newprio;
-  //      int pid = getpid();
+	    sched_param param;
+	    param.sched_priority = newprio;
+        int pid = getpid();
         //cout << "pid " << pid << endl;
         //cout << "prio " << sched_get_priority_max(SCHED_FIFO) << endl;
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;
-        //if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
-        //    perror("on setscheduler: ");
-        //}
+        if(sched_setscheduler(pid, SCHED_FIFO, &param)) {
+            perror("on setscheduler: ");
+        }
         //cout <<  "sched: " << sched_getscheduler(pid) << endl;
         //pthread_setaffinity_np(ss_thread, sizeof(cpu_set_t), &cpus);
         //cout << "before join1" << endl;
@@ -604,6 +603,7 @@ int main(int argc, char *argv[]) {
 void * module (void * arg) {
     //uint64_t delay = timestamp() - starttime;
 	Module * vals = (Module *) arg;
+	//cout << vals->get_name() << endl;
 //	int text-right;
 //	int number_of_current_pair_out;
 	double counter = 0.5;
@@ -671,8 +671,8 @@ void * module (void * arg) {
 					long_of_messages_queue++;
 					if (max_long_of_messages_queue < long_of_messages_queue)
 						max_long_of_messages_queue = long_of_messages_queue;
-                    array_of_times[vals->get_number()][time_index] = timestamp();
-                    time_index++;
+                   // array_of_times[vals->get_number()][time_index] = timestamp();
+                    //time_index++;
 					//receiving
 					array_for_file[vals->get_number()][index] = 2; //bad
 					//cout << index << endl;
@@ -742,7 +742,7 @@ void * module (void * arg) {
 	delete(recv_object_s);
 	array_of_max_queue[vals->get_number()] = max_long_of_messages_queue;
 	array_of_queue[vals->get_number()][recv_index] = 300;
-	//cout << vals->get_name() << " finished " << endl;
+	cout << vals->get_name() << " finished " << endl;
 }
 
 vector<Module> parser() {
