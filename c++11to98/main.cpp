@@ -309,23 +309,23 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        bool if_SS_need_accept = false;
+
         //modules for this machine
-        if (atoi(argv[1])) { //if on SS module on this machine
-            for (int i = 0; i < modules.size(); i++) {
-                for (int i_m = 0; i_m < modules[i].get_nti(); i_m++) {
-                    if (modules[i].message_input_array[i_m].name == "СС") {
-                        if (modules[i].get_machine() == my_machine) { // then will create pair
-                            pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
-                            ss_channels.push_back(pairs.size() - 1);
-                            modules[i].message_input_array[i_m].connection_type = 0;
-                            modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
-                        }
-                        else {
-                            if_SS_need_accept = true;
-                            modules[i].message_output_array[i_m].connection_type = 1;
-                            modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
-                            modules[i].message_input_array[i_m].channel_from = -1;
+        //if on SS module on this machine
+        for (int i = 0; i < modules.size(); i++) {
+            for (int i_m = 0; i_m < modules[i].get_nti(); i_m++) {
+                if (modules[i].message_input_array[i_m].name == "СС") {
+                    if ( (modules[i].get_machine() == my_machine)&&(argv[1]) ) { // if on SS module on this machine then will create pair
+                        pairs.push_back(make_pair(&datas[pairs.size() - 1][0], &datas[pairs.size() - 1][0]));
+                        ss_channels.push_back(pairs.size() - 1);
+                        modules[i].message_input_array[i_m].connection_type = 0;
+                        modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
+                    }
+                    else {
+                        modules[i].message_output_array[i_m].connection_type = 1;
+                        modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
+                        modules[i].message_input_array[i_m].channel_from = -1;
+                        if(argv[1]) {
                             SS_port.push_back(modules[i].get_port());
                             SS_ip_address_to.push_back(modules[i].get_my_ip_address());
                         }
@@ -333,6 +333,7 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+
 
         vector<Module> my_modules;
         for (int i = 0; i < modules.size(); i++) {
