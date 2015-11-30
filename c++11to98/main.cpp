@@ -332,6 +332,10 @@ int main(int argc, char *argv[]) {
 		                    modules[i].message_input_array[i_m].channel_from = -1;
 						}
                         if( atoi(argv[1]) ) {
+							if (modules[i].get_port() == 0) {
+					            modules[i].set_port(port++);
+		                        cout << modules[i].get_port() << endl;
+					        }
                             SS_port.push_back(modules[i].get_port());
                             SS_ip_address_to.push_back(modules[i].get_my_ip_address());
                         }
