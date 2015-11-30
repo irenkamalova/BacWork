@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
                         modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
                     }
                     else {
-                        modules[i].message_output_array[i_m].connection_type = 1;
+                        modules[i].message_input_array[i_m].connection_type = 1;
                         modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
                         modules[i].message_input_array[i_m].channel_from = -1;
                         if(atoi(argv[1])) {
