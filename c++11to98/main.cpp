@@ -322,14 +322,16 @@ int main(int argc, char *argv[]) {
                         modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
                     }
 		    		else {
-						if (modules[i].get_port() == 0) {
-			                modules[i].set_port(port++);
-                            cout << modules[i].get_port() << endl;
-			            }
-                        modules[i].message_input_array[i_m].connection_type = 1;
-                        modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
-                        modules[i].message_input_array[i_m].channel_from = -1;
-                        if(atoi(argv[1])) {
+						if( (modules[i].get_machine() == my_machine) ) {
+							if (modules[i].get_port() == 0) {
+					            modules[i].set_port(port++);
+		                        cout << modules[i].get_port() << endl;
+					        }
+		                    modules[i].message_input_array[i_m].connection_type = 1;
+		                    modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
+		                    modules[i].message_input_array[i_m].channel_from = -1;
+						}
+                        if( atoi(argv[1]) ) {
                             SS_port.push_back(modules[i].get_port());
                             SS_ip_address_to.push_back(modules[i].get_my_ip_address());
                         }
