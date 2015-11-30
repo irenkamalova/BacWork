@@ -401,12 +401,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-        for(int i = 0; i < SS_port.size(); i++) {
-            cout << "in cycle for connrect" << endl;
-            int socket = create_socket(&(SS_port[i]), &(SS_ip_address_to[i]));
-            SS_channels_network.push_back( socket );
+        if(argv[1]) {
+            for (int i = 0; i < SS_port.size(); i++) {
+                cout << "in cycle for connrect" << endl;
+                int socket = create_socket(&(SS_port[i]), &(SS_ip_address_to[i]));
+                SS_channels_network.push_back(socket);
+            }
         }
-
 		for (vector<pthread_t>::iterator it = threads.begin(); it != threads.end();
 					  ++it) {
 			pthread_join(*it, (void **) NULL);
