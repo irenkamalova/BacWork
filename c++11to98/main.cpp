@@ -46,10 +46,10 @@ uint64_t starttime;
 
 string str = "messages_result.txt";
 string s = "modules.txt";
-//string s1 = "/home/irisha/ClionProjects/BacWork/c++11to98/file1.txt";
-string s2 = "/home/irisha/ClionProjects/BacWork/c++11to98/file2.txt";
-string s3 = "/home/irisha/ClionProjects/BacWork/c++11to98/file3.txt";
-string s4 = "/home/irisha/ClionProjects/BacWork/c++11to98/file4.txt";
+//string s1 = "file1.txt";
+string s2 = "file2.txt";
+string s3 = "file3.txt";
+string s4 = "file4.txt";
 static const uint64_t TIME_SS = 10000000000; // 10 seconds
 static const uint64_t TIME = 10000000000;
 static const uint64_t SLEEP_TIME = 1000000;
@@ -207,11 +207,11 @@ int main(int argc, char *argv[]) {
 
 
         int my_machine = atoi(argv[2]);
-        string s_a = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_auto.txt";
+        string s_a = "modules_auto.txt";
         vector<Module> modules_auto = parser1(s_a);
-        string s_b = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_search.txt";
+        string s_b = "modules_search.txt";
         vector<Module> modules_search = parser1(s_b);
-        string s_c = "/home/irisha/ClionProjects/BacWork/c++11to98/modules_general.txt";
+        string s_c = "modules_general.txt";
         vector<Module> modules_general = parser1(s_c);
 
         vector<Module> modules;
