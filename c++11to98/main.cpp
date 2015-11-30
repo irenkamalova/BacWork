@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
                                     }
                                     modules[i].message_output_array[i_m].port_to = modules[j].get_port();
                                     modules[i].message_output_array[i_m].ip_address_to = modules[j].get_my_ip_address();
-                                    m_i.ip_address_from = modules[i].get_my_ip_address();
+				    m_i.ip_address_from = modules[i].get_my_ip_address();
                                     m_i.channel_from = -1;
                                 }
                                 modules[j].set_message_input(m_i, modules[j].get_nti());
@@ -321,7 +321,10 @@ int main(int argc, char *argv[]) {
                         modules[i].message_input_array[i_m].connection_type = 0;
                         modules[i].message_input_array[i_m].channel_from = pairs.size() - 1;
                     }
-                    else {
+		    		else {
+						if (modules[i].get_port() == 0) {
+			                modules[i].set_port(port++);
+			            }
                         modules[i].message_input_array[i_m].connection_type = 1;
                         modules[i].message_input_array[i_m].ip_address_from = machine_address[my_machine];
                         modules[i].message_input_array[i_m].channel_from = -1;
@@ -910,6 +913,7 @@ int create_sock_for_receiving(int *port, string *ip_address) {
 
 void* create_sockets_for_receiving(void *arg) {
 	Module * vals = (Module *) arg;
+	cout << vals->get_name() << "start" << endl;
 	vector<Module::message_input> m_i = vals->get_all_message_input();
 	int socket_for_receiving;
 	if(vals->get_port() != 0) {
