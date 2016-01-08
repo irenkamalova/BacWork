@@ -1,9 +1,0 @@
-Name:
-ИмАС
-Input data:
-Number: 1
-РаспАС 50
-Main input data:
-РаспАС
-Output data:
-ИзмАС 50

@@ -1,6 +1,0 @@
-Name:
-Рег
-Input data:
-Number: 2
-ТрАС 2
-НовАС 2
