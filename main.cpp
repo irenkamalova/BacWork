@@ -1,3 +1,16 @@
+/*
+ * main.cpp 
+ * 
+ * The main file.
+ * This program gets how many modules will be start, number of current
+ * machine and if module that generate synchrosignal will be started in this machine
+ * Then, it executes all modules, every module on it's thread
+ * After modules exexuted, it write results and finish
+ *
+ *  Created on: Apr 16, 2015
+ *      Author: irisha
+ */
+
 #include <iostream>
 #include "Module.h"
 #include <cstring>

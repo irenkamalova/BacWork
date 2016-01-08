@@ -1,5 +1,7 @@
 /*
- * Module.h
+ * Module.h 
+ * Class Module has to store all parameters of real module
+ * and contains getters and setters methods for parameters
  *
  *  Created on: Apr 16, 2015
  *      Author: irisha
